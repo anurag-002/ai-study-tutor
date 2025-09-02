@@ -48,9 +48,29 @@ export function MathRenderer({ content }: MathRendererProps) {
             throwOnError: false
           });
         }
-      }, 100);
+      }, 200);
     }
   }, [katexLoaded, content]);
+
+  // Also render math after each content update
+  useEffect(() => {
+    if (katexLoaded && containerRef.current && window.renderMathInElement) {
+      setTimeout(() => {
+        if (containerRef.current) {
+          window.renderMathInElement(containerRef.current, {
+            delimiters: [
+              { left: '$$', right: '$$', display: true },
+              { left: '$', right: '$', display: false },
+              { left: '\\[', right: '\\]', display: true },
+              { left: '\\(', right: '\\)', display: false },
+            ],
+            ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+            throwOnError: false
+          });
+        }
+      }, 300);
+    }
+  }, [content, katexLoaded]);
 
   // Process content to detect and format steps
   const processContent = (text: string) => {

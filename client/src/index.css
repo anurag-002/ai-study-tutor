@@ -174,3 +174,48 @@
   transform: translateY(-2px);
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
+
+/* Enhanced KaTeX math styling */
+.katex {
+  font-size: 1.1em !important;
+  color: hsl(var(--primary)) !important;
+}
+
+.katex-display {
+  margin: 1rem 0 !important;
+  padding: 0.75rem !important;
+  background: hsl(var(--muted)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: calc(var(--radius) - 2px) !important;
+  text-align: center !important;
+}
+
+.katex-display > .katex {
+  color: hsl(var(--foreground)) !important;
+  font-size: 1.2em !important;
+}
+
+/* Inline math expressions */
+.katex:not(.katex-display) {
+  padding: 0.1em 0.3em !important;
+  background: hsl(var(--muted)) !important;
+  border-radius: 4px !important;
+  margin: 0 0.1em !important;
+  font-weight: 500 !important;
+}
+
+/* Step content math styling */
+[data-testid="math-content"] p .katex {
+  background: hsl(var(--secondary)/10) !important;
+  color: hsl(var(--primary)) !important;
+  border: 1px solid hsl(var(--secondary)/20) !important;
+}
+
+/* Special styling for boxed answers */
+.katex .boxed {
+  background: hsl(var(--accent)/10) !important;
+  border: 2px solid hsl(var(--accent)) !important;
+  border-radius: 6px !important;
+  padding: 0.3em 0.5em !important;
+  font-weight: 600 !important;
+}
