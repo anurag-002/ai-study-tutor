@@ -32,10 +32,11 @@ export function MathRenderer({ content }: MathRendererProps) {
     }
   }, []);
 
+  // Render math after content or KaTeX loads
   useEffect(() => {
     if (katexLoaded && containerRef.current && window.renderMathInElement) {
-      // Small delay to ensure DOM is ready
-      setTimeout(() => {
+      // Multiple rendering attempts to ensure all math is caught
+      const renderMath = () => {
         if (containerRef.current) {
           window.renderMathInElement(containerRef.current, {
             delimiters: [
@@ -48,80 +49,67 @@ export function MathRenderer({ content }: MathRendererProps) {
             throwOnError: false
           });
         }
-      }, 200);
+      };
+
+      // Immediate render
+      setTimeout(renderMath, 100);
+      // Secondary render to catch any missed expressions
+      setTimeout(renderMath, 500);
+      // Final render to ensure everything is processed
+      setTimeout(renderMath, 1000);
     }
   }, [katexLoaded, content]);
 
-  // Also render math after each content update
-  useEffect(() => {
-    if (katexLoaded && containerRef.current && window.renderMathInElement) {
-      setTimeout(() => {
-        if (containerRef.current) {
-          window.renderMathInElement(containerRef.current, {
-            delimiters: [
-              { left: '$$', right: '$$', display: true },
-              { left: '$', right: '$', display: false },
-              { left: '\\[', right: '\\]', display: true },
-              { left: '\\(', right: '\\)', display: false },
-            ],
-            ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
-            throwOnError: false
-          });
-        }
-      }, 300);
-    }
-  }, [content, katexLoaded]);
-
-  // Process content to detect and format steps
-  const processContent = (text: string) => {
+  // Process content to detect and format steps with proper HTML for KaTeX
+  const processContentToHTML = (text: string) => {
     const lines = text.split('\n');
-    const processedLines: JSX.Element[] = [];
     let stepNumber = 1;
+    let html = '';
 
-    lines.forEach((line, index) => {
+    lines.forEach((line) => {
       const trimmedLine = line.trim();
       
       if (!trimmedLine) {
-        processedLines.push(<br key={index} />);
+        html += '<br />';
         return;
       }
       
       // Detect step patterns (markdown headers like ## Step 1:)
       if (trimmedLine.startsWith('##') && (trimmedLine.includes('Step') || /\d+/.test(trimmedLine))) {
         const stepText = trimmedLine.replace(/^##\s*/, '').replace(/^(Step \d+|^\d+\.|\d+\)):?\s*/i, '').trim();
-        processedLines.push(
-          <div key={index} className="flex items-start space-x-3 my-4">
-            <span className="step-number w-6 h-6 rounded-full flex items-center justify-center text-xs flex-shrink-0 mt-0.5">
-              {stepNumber}
+        html += `
+          <div class="flex items-start space-x-3 my-4">
+            <span class="step-number w-6 h-6 rounded-full flex items-center justify-center text-xs flex-shrink-0 mt-0.5">
+              ${stepNumber}
             </span>
-            <div className="flex-1">
-              <h3 className="text-sm font-medium text-foreground">{stepText}</h3>
+            <div class="flex-1">
+              <h3 class="text-sm font-medium text-foreground">${stepText}</h3>
             </div>
           </div>
-        );
+        `;
         stepNumber++;
       } else if (trimmedLine.toLowerCase().includes('answer') || trimmedLine.toLowerCase().includes('solution')) {
         // Highlight final answers
-        processedLines.push(
-          <div key={index} className="bg-secondary/10 rounded-lg p-3 border border-secondary/20 my-3">
-            <p className="text-sm font-medium text-foreground">{trimmedLine}</p>
+        html += `
+          <div class="bg-secondary/10 rounded-lg p-3 border border-secondary/20 my-3">
+            <p class="text-sm font-medium text-foreground">${trimmedLine}</p>
           </div>
-        );
+        `;
       } else {
         // Regular content - preserve LaTeX formatting
-        processedLines.push(
-          <p key={index} className="text-sm text-foreground my-1">{trimmedLine}</p>
-        );
+        html += `<p class="text-sm text-foreground my-1">${trimmedLine}</p>`;
       }
     });
 
-    return processedLines;
+    return html;
   };
 
   return (
-    <div ref={containerRef} data-testid="math-content">
-      {processContent(content)}
-    </div>
+    <div 
+      ref={containerRef} 
+      data-testid="math-content"
+      dangerouslySetInnerHTML={{ __html: processContentToHTML(content) }}
+    />
   );
 }
 
