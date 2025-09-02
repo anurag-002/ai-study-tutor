@@ -219,3 +219,36 @@
   padding: 0.3em 0.5em !important;
   font-weight: 600 !important;
 }
+
+/* Dynamic font size support */
+:root {
+  --app-font-size: 16px;
+}
+
+/* Apply dynamic font size to chat content */
+[data-testid="chat-messages"] {
+  font-size: var(--app-font-size);
+}
+
+[data-testid="math-content"] {
+  font-size: var(--app-font-size);
+}
+
+[data-testid="textarea-message-input"] {
+  font-size: var(--app-font-size);
+}
+
+/* Dark mode improvements */
+.dark {
+  color-scheme: dark;
+}
+
+.dark .chat-bubble-ai {
+  background: hsl(var(--muted));
+  border: 1px solid hsl(var(--border));
+  color: hsl(var(--foreground));
+}
+
+.dark .upload-dropzone.drag-over {
+  background-color: hsl(var(--primary)/10);
+}
