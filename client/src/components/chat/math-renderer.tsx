@@ -20,12 +20,22 @@ export function MathRenderer({ content }: MathRendererProps) {
       script.onload = () => {
         const autoRenderScript = document.createElement('script');
         autoRenderScript.src = 'https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js';
-        autoRenderScript.onload = () => renderMath();
+        autoRenderScript.onload = () => {
+          // Set content first, then render math
+          if (containerRef.current) {
+            containerRef.current.innerHTML = processContentToHTML(content);
+            renderMath();
+          }
+        };
         document.head.appendChild(autoRenderScript);
       };
       document.head.appendChild(script);
     } else if (window.renderMathInElement) {
-      renderMath();
+      // Set content first, then render math
+      if (containerRef.current) {
+        containerRef.current.innerHTML = processContentToHTML(content);
+        renderMath();
+      }
     }
   }, [content]);
 
@@ -42,56 +52,49 @@ export function MathRenderer({ content }: MathRendererProps) {
     }
   };
 
-  // Process content to detect and format steps
-  const processContent = (text: string) => {
-    // Split content into lines and detect steps
+  // Process content to HTML while preserving LaTeX for KaTeX rendering
+  const processContentToHTML = (text: string): string => {
     const lines = text.split('\n');
-    const processedLines: JSX.Element[] = [];
+    let htmlContent = '';
     let stepNumber = 1;
 
-    lines.forEach((line, index) => {
+    lines.forEach((line) => {
       const trimmedLine = line.trim();
       
-      // Detect step patterns
-      if (trimmedLine.match(/^(Step \d+|^\d+\.|\d+\))/i)) {
-        processedLines.push(
-          <div key={index} className="flex items-start space-x-3 my-4">
-            <span className="step-number w-6 h-6 rounded-full flex items-center justify-center text-xs flex-shrink-0 mt-0.5">
-              {stepNumber}
+      if (!trimmedLine) {
+        htmlContent += '<br>';
+        return;
+      }
+      
+      // Detect step patterns (markdown headers like ## Step 1:)
+      if (trimmedLine.startsWith('##') && (trimmedLine.includes('Step') || /\d+/.test(trimmedLine))) {
+        const stepText = trimmedLine.replace(/^##\s*/, '').replace(/^(Step \d+|^\d+\.|\d+\)):?\s*/i, '').trim();
+        htmlContent += `
+          <div class="flex items-start space-x-3 my-4">
+            <span class="step-number w-6 h-6 rounded-full flex items-center justify-center text-xs flex-shrink-0 mt-0.5">
+              ${stepNumber}
             </span>
-            <div className="flex-1">
-              <p className="text-sm text-foreground">{trimmedLine.replace(/^(Step \d+|^\d+\.|\d+\))/i, '').trim()}</p>
+            <div class="flex-1">
+              <h3 class="text-sm font-medium text-foreground">${stepText}</h3>
             </div>
           </div>
-        );
+        `;
         stepNumber++;
-      } else if (trimmedLine.includes('=') && (trimmedLine.includes('x') || trimmedLine.includes('y') || trimmedLine.includes('+'))) {
-        // Detect mathematical expressions
-        processedLines.push(
-          <div key={index} className="math-expression my-2">
-            <p>{trimmedLine}</p>
-          </div>
-        );
       } else if (trimmedLine.toLowerCase().includes('answer') || trimmedLine.toLowerCase().includes('solution')) {
         // Highlight final answers
-        processedLines.push(
-          <div key={index} className="bg-secondary/10 rounded-lg p-3 border border-secondary/20 my-3">
-            <p className="text-sm font-medium text-foreground">{trimmedLine}</p>
-          </div>
-        );
-      } else if (trimmedLine) {
-        processedLines.push(
-          <p key={index} className="text-sm text-foreground my-1">{trimmedLine}</p>
-        );
+        htmlContent += `<div class="bg-secondary/10 rounded-lg p-3 border border-secondary/20 my-3"><p class="text-sm font-medium text-foreground">${trimmedLine}</p></div>`;
+      } else {
+        // Regular content - preserve LaTeX formatting
+        htmlContent += `<p class="text-sm text-foreground my-1">${trimmedLine}</p>`;
       }
     });
 
-    return processedLines;
+    return htmlContent;
   };
 
   return (
     <div ref={containerRef} data-testid="math-content">
-      {processContent(content)}
+      {/* Content will be set via innerHTML to preserve LaTeX for KaTeX rendering */}
     </div>
   );
 }
