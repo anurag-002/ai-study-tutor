@@ -8,6 +8,10 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { ChatMessage } from "@/components/chat/chat-message";
 import { FileUpload } from "@/components/chat/file-upload";
 import { GraduationCap, Settings, UserCircle, Paperclip, Send, MessageSquare, Camera, Lightbulb, Plus, History, SquareRadical } from "lucide-react";
+import { MathSymbolsDialog } from "@/components/chat/math-symbols-dialog";
+import { HistoryDialog } from "@/components/chat/history-dialog";
+import { SettingsDialog } from "@/components/chat/settings-dialog";
+import { ProfileDialog } from "@/components/chat/profile-dialog";
 import type { Message, Conversation } from "@shared/schema";
 
 export default function ChatPage() {
@@ -130,6 +134,22 @@ export default function ChatPage() {
     }
   };
 
+  const handleInsertSymbol = (latex: string) => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const newValue = inputValue.slice(0, start) + latex + inputValue.slice(end);
+      setInputValue(newValue);
+      
+      // Focus back to textarea and set cursor position after inserted text
+      setTimeout(() => {
+        textarea.focus();
+        textarea.setSelectionRange(start + latex.length, start + latex.length);
+      }, 10);
+    }
+  };
+
   return (
     <div className="h-screen flex flex-col bg-background">
       {/* Header */}
@@ -147,12 +167,16 @@ export default function ChatPage() {
             </div>
             
             <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="icon" data-testid="button-settings">
-                <Settings className="text-muted-foreground" />
-              </Button>
-              <Button variant="ghost" size="icon" data-testid="button-profile">
-                <UserCircle className="text-muted-foreground text-xl" />
-              </Button>
+              <SettingsDialog>
+                <Button variant="ghost" size="icon" data-testid="button-settings">
+                  <Settings className="text-muted-foreground" />
+                </Button>
+              </SettingsDialog>
+              <ProfileDialog>
+                <Button variant="ghost" size="icon" data-testid="button-profile">
+                  <UserCircle className="text-muted-foreground text-xl" />
+                </Button>
+              </ProfileDialog>
             </div>
           </div>
         </div>
@@ -308,14 +332,16 @@ export default function ChatPage() {
             
             {/* Quick Action Buttons */}
             <div className="flex items-center justify-center space-x-4 mt-4">
-              <Button 
-                variant="ghost"
-                className="flex items-center space-x-2 px-3 py-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-sm text-muted-foreground hover:text-foreground"
-                data-testid="button-math-symbols"
-              >
-                <SquareRadical className="w-4 h-4" />
-                <span>Math Symbols</span>
-              </Button>
+              <MathSymbolsDialog onInsertSymbol={handleInsertSymbol}>
+                <Button 
+                  variant="ghost"
+                  className="flex items-center space-x-2 px-3 py-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-sm text-muted-foreground hover:text-foreground"
+                  data-testid="button-math-symbols"
+                >
+                  <SquareRadical className="w-4 h-4" />
+                  <span>Math Symbols</span>
+                </Button>
+              </MathSymbolsDialog>
               <Button 
                 variant="ghost"
                 className="flex items-center space-x-2 px-3 py-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-sm text-muted-foreground hover:text-foreground"
@@ -325,14 +351,16 @@ export default function ChatPage() {
                 <Plus className="w-4 h-4" />
                 <span>New Chat</span>
               </Button>
-              <Button 
-                variant="ghost"
-                className="flex items-center space-x-2 px-3 py-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-sm text-muted-foreground hover:text-foreground"
-                data-testid="button-history"
-              >
-                <History className="w-4 h-4" />
-                <span>History</span>
-              </Button>
+              <HistoryDialog currentConversationId={currentConversationId} onSelectConversation={setCurrentConversationId}>
+                <Button 
+                  variant="ghost"
+                  className="flex items-center space-x-2 px-3 py-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-sm text-muted-foreground hover:text-foreground"
+                  data-testid="button-history"
+                >
+                  <History className="w-4 h-4" />
+                  <span>History</span>
+                </Button>
+              </HistoryDialog>
             </div>
           </div>
         </div>
