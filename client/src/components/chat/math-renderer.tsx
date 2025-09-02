@@ -60,6 +60,13 @@ export function MathRenderer({ content }: MathRendererProps) {
     }
   }, [katexLoaded, content]);
 
+  // HTML escape function to preserve LaTeX expressions
+  const escapeHtml = (text: string) => {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  };
+
   // Process content to detect and format steps with proper HTML for KaTeX
   const processContentToHTML = (text: string) => {
     const lines = text.split('\n');
@@ -77,27 +84,30 @@ export function MathRenderer({ content }: MathRendererProps) {
       // Detect step patterns (markdown headers like ## Step 1:)
       if (trimmedLine.startsWith('##') && (trimmedLine.includes('Step') || /\d+/.test(trimmedLine))) {
         const stepText = trimmedLine.replace(/^##\s*/, '').replace(/^(Step \d+|^\d+\.|\d+\)):?\s*/i, '').trim();
+        const escapedStepText = escapeHtml(stepText);
         html += `
           <div class="flex items-start space-x-3 my-4">
             <span class="step-number w-6 h-6 rounded-full flex items-center justify-center text-xs flex-shrink-0 mt-0.5">
               ${stepNumber}
             </span>
             <div class="flex-1">
-              <h3 class="text-sm font-medium text-foreground">${stepText}</h3>
+              <h3 class="text-sm font-medium text-foreground">${escapedStepText}</h3>
             </div>
           </div>
         `;
         stepNumber++;
       } else if (trimmedLine.toLowerCase().includes('answer') || trimmedLine.toLowerCase().includes('solution')) {
-        // Highlight final answers
+        // Highlight final answers - preserve LaTeX
+        const escapedLine = escapeHtml(trimmedLine);
         html += `
           <div class="bg-secondary/10 rounded-lg p-3 border border-secondary/20 my-3">
-            <p class="text-sm font-medium text-foreground">${trimmedLine}</p>
+            <p class="text-sm font-medium text-foreground">${escapedLine}</p>
           </div>
         `;
       } else {
-        // Regular content - preserve LaTeX formatting
-        html += `<p class="text-sm text-foreground my-1">${trimmedLine}</p>`;
+        // Regular content - preserve LaTeX formatting by escaping HTML entities
+        const escapedLine = escapeHtml(trimmedLine);
+        html += `<p class="text-sm text-foreground my-1">${escapedLine}</p>`;
       }
     });
 
