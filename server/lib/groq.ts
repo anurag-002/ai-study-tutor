@@ -29,6 +29,9 @@ Always structure your response with numbered steps and clear explanations.`
 
       // Add user message
       if (imageUrl) {
+        // Convert relative URL to full URL for Groq API
+        const fullImageUrl = imageUrl.startsWith('http') ? imageUrl : `https://${process.env.REPLIT_DEV_DOMAIN || 'localhost:5000'}${imageUrl}`;
+        
         messages.push({
           role: 'user',
           content: [
@@ -39,7 +42,7 @@ Always structure your response with numbered steps and clear explanations.`
             {
               type: 'image_url',
               image_url: {
-                url: imageUrl
+                url: fullImageUrl
               }
             }
           ]
