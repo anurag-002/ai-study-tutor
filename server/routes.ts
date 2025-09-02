@@ -40,6 +40,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all conversations (for demo purposes)
+  app.get('/api/conversations', async (req, res) => {
+    try {
+      // For demo, we'll get conversations for the demo user
+      const conversations = await storage.getConversationsByUserId('demo-user');
+      res.json(conversations);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Get conversations for a user
   app.get('/api/conversations/:userId', async (req, res) => {
     try {

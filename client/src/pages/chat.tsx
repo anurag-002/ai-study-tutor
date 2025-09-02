@@ -351,7 +351,7 @@ export default function ChatPage() {
                 <Plus className="w-4 h-4" />
                 <span>New Chat</span>
               </Button>
-              <HistoryDialog currentConversationId={currentConversationId} onSelectConversation={setCurrentConversationId}>
+              <HistoryDialog currentConversationId={currentConversationId} onSelectConversation={setCurrentConversationId} userId={userId}>
                 <Button 
                   variant="ghost"
                   className="flex items-center space-x-2 px-3 py-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-sm text-muted-foreground hover:text-foreground"

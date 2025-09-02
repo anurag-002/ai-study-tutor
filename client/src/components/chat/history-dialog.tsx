@@ -10,15 +10,16 @@ import type { Conversation } from "@shared/schema";
 interface HistoryDialogProps {
   currentConversationId: string | null;
   onSelectConversation: (id: string) => void;
+  userId: string;
   children: React.ReactNode;
 }
 
-export function HistoryDialog({ currentConversationId, onSelectConversation, children }: HistoryDialogProps) {
+export function HistoryDialog({ currentConversationId, onSelectConversation, userId, children }: HistoryDialogProps) {
   const [open, setOpen] = useState(false);
 
-  // Get conversation history - using the conversations endpoint
-  const { data: conversations = [], isLoading } = useQuery({
-    queryKey: ['/api/conversations'],
+  // Get conversation history - using the conversations endpoint with userId
+  const { data: conversations = [], isLoading } = useQuery<Conversation[]>({
+    queryKey: ['/api/conversations', userId],
     enabled: open, // Only fetch when dialog is open
   });
 
@@ -52,7 +53,7 @@ export function HistoryDialog({ currentConversationId, onSelectConversation, chi
               <p className="text-sm">Start a new chat to see your history here</p>
             </div>
           ) : (
-            conversations.map((conversation: Conversation) => (
+            conversations.map((conversation) => (
               <Card 
                 key={conversation.id}
                 className={`p-4 cursor-pointer transition-colors hover:bg-muted/50 ${
