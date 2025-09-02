@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Study Tutor - Solve Problems with AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                borderRadius: {
+                    lg: "var(--radius)",
+                    md: "calc(var(--radius) - 2px)",
+                    sm: "calc(var(--radius) - 4px)",
+                },
+                colors: {
+                    background: "var(--background)",
+                    foreground: "var(--foreground)",
+                    card: {
+                        DEFAULT: "var(--card)",
+                        foreground: "var(--card-foreground)",
+                    },
+                    popover: {
+                        DEFAULT: "var(--popover)",
+                        foreground: "var(--popover-foreground)",
+                    },
+                    primary: {
+                        DEFAULT: "var(--primary)",
+                        foreground: "var(--primary-foreground)",
+                    },
+                    secondary: {
+                        DEFAULT: "var(--secondary)",
+                        foreground: "var(--secondary-foreground)",
+                    },
+                    muted: {
+                        DEFAULT: "var(--muted)",
+                        foreground: "var(--muted-foreground)",
+                    },
+                    accent: {
+                        DEFAULT: "var(--accent)",
+                        foreground: "var(--accent-foreground)",
+                    },
+                    destructive: {
+                        DEFAULT: "var(--destructive)",
+                        foreground: "var(--destructive-foreground)",
+                    },
+                    border: "var(--border)",
+                    input: "var(--input)",
+                    ring: "var(--ring)",
+                },
+                fontFamily: {
+                    sans: ["var(--font-sans)"],
+                }
+            },
+        }
+    };
+    </script>
+    <style>
+        :root {
+            --background: hsl(210 20% 98%);
+            --foreground: hsl(222.2 84% 4.9%);
+            --card: hsl(0 0% 100%);
+            --card-foreground: hsl(222.2 84% 4.9%);
+            --popover: hsl(0 0% 100%);
+            --popover-foreground: hsl(222.2 84% 4.9%);
+            --primary: hsl(239 84% 67%);
+            --primary-foreground: hsl(0 0% 98%);
+            --secondary: hsl(158 64% 52%);
+            --secondary-foreground: hsl(222.2 84% 4.9%);
+            --muted: hsl(210 40% 96%);
+            --muted-foreground: hsl(215.4 16.3% 46.9%);
+            --accent: hsl(43 96% 56%);
+            --accent-foreground: hsl(222.2 84% 4.9%);
+            --destructive: hsl(0 84.2% 60.2%);
+            --destructive-foreground: hsl(210 40% 98%);
+            --border: hsl(214.3 31.8% 91.4%);
+            --input: hsl(214.3 31.8% 91.4%);
+            --ring: hsl(239 84% 67%);
+            --radius: 0.75rem;
+            --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            font-family: var(--font-sans);
+        }
+
+        .typing-indicator {
+            animation: typing 1.4s infinite;
+        }
+
+        @keyframes typing {
+            0%, 60% { opacity: 1; }
+            30% { opacity: 0.5; }
+        }
+
+        .chat-bubble-user {
+            background: hsl(0 0% 100%);
+            border: 1px solid hsl(214.3 31.8% 91.4%);
+        }
+
+        .chat-bubble-ai {
+            background: hsl(239 100% 97%);
+            border: 1px solid hsl(239 84% 90%);
+        }
+
+        .math-expression {
+            background: hsl(210 40% 98%);
+            border: 1px solid hsl(214.3 31.8% 91.4%);
+            font-family: 'Courier New', monospace;
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            display: inline-block;
+            margin: 0.25rem 0;
+        }
+
+        .step-card {
+            background: hsl(0 0% 100%);
+            border: 1px solid hsl(214.3 31.8% 91.4%);
+            border-left: 4px solid hsl(239 84% 67%);
+        }
+
+        .upload-dropzone {
+            border: 2px dashed hsl(214.3 31.8% 91.4%);
+            transition: all 0.3s ease;
+        }
+
+        .upload-dropzone:hover,
+        .upload-dropzone.dragover {
+            border-color: hsl(239 84% 67%);
+            background-color: hsl(239 100% 97%);
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-background text-foreground min-h-screen">
+    <!-- @COMPONENT: AppHeader -->
+    <header class="bg-card border-b border-border sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                    <i class="fas fa-graduation-cap text-primary-foreground text-sm"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-semibold text-foreground">AI Study Tutor</h1>
+                    <p class="text-xs text-muted-foreground">Powered by Groq AI</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button class="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted">
+                    <i class="fas fa-history text-sm"></i>
+                </button>
+                <button class="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted">
+                    <i class="fas fa-cog text-sm"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+    <!-- @END_COMPONENT: AppHeader -->
+
+    <!-- @COMPONENT: MainChatInterface -->
+    <main class="max-w-4xl mx-auto px-4 pb-32">
+        <!-- Welcome Message -->
+        <div class="py-8 text-center" data-mock="true">
+            <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-robot text-primary text-2xl"></i>
+            </div>
+            <h2 class="text-2xl font-semibold text-foreground mb-2">How can I help you study today?</h2>
+            <p class="text-muted-foreground mb-6">Upload a photo of your homework or type your question to get step-by-step solutions</p>
+            
+            <!-- Quick Action Buttons -->
+            <div class="flex flex-wrap justify-center gap-3 mb-8">
+                <button class="px-4 py-2 bg-card border border-border rounded-lg text-sm text-foreground hover:bg-muted transition-colors">
+                    <i class="fas fa-calculator mr-2 text-primary"></i>Math Problem
+                </button>
+                <button class="px-4 py-2 bg-card border border-border rounded-lg text-sm text-foreground hover:bg-muted transition-colors">
+                    <i class="fas fa-flask mr-2 text-secondary"></i>Science Question
+                </button>
+                <button class="px-4 py-2 bg-card border border-border rounded-lg text-sm text-foreground hover:bg-muted transition-colors">
+                    <i class="fas fa-book mr-2 text-accent"></i>Essay Help
+                </button>
+            </div>
+        </div>
+
+        <!-- @MAP: chatMessages.map(message => ( -->
+        <!-- Chat Messages Container -->
+        <div class="space-y-6">
+            <!-- User Message with Image -->
+            <div class="flex justify-end fade-in" data-mock="true">
+                <div class="max-w-lg">
+                    <div class="chat-bubble-user rounded-2xl rounded-br-md p-4 shadow-sm">
+                        <p class="text-foreground mb-3">Can you help me solve this quadratic equation? I'm having trouble with the steps.</p>
+                        <!-- Uploaded Image Preview -->
+                        <!-- A clear photo of a handwritten quadratic equation: x² + 5x + 6 = 0 on lined paper -->
+                        <div class="bg-muted rounded-lg p-3 border border-border">
+                            <img src="https://images.unsplash.com/photo-1635070041078-e363dbe005cb?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=400&h=300" 
+                                 alt="Handwritten quadratic equation on paper" 
+                                 class="w-full h-32 object-cover rounded-md" />
+                            <p class="text-xs text-muted-foreground mt-2 flex items-center">
+                                <i class="fas fa-image mr-1"></i>equation_problem.jpg
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex justify-end mt-1">
+                        <span class="text-xs text-muted-foreground">2:45 PM</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Response with Step-by-Step Solution -->
+            <div class="flex justify-start fade-in" data-mock="true">
+                <div class="max-w-2xl">
+                    <div class="chat-bubble-ai rounded-2xl rounded-bl-md p-6 shadow-sm">
+                        <div class="flex items-center mb-4">
+                            <div class="w-6 h-6 bg-primary rounded-full flex items-center justify-center mr-3">
+                                <i class="fas fa-robot text-primary-foreground text-xs"></i>
+                            </div>
+                            <span class="font-medium text-foreground">AI Tutor</span>
+                        </div>
+                        
+                        <p class="text-foreground mb-4">I can help you solve this quadratic equation! Let me break it down step by step.</p>
+                        
+                        <div class="bg-muted rounded-lg p-3 mb-4">
+                            <p class="text-sm font-medium text-foreground mb-2">Problem:</p>
+                            <div class="math-expression">x² + 5x + 6 = 0</div>
+                        </div>
+
+                        <!-- Step-by-Step Solution -->
+                        <div class="space-y-4">
+                            <div class="step-card rounded-lg p-4">
+                                <div class="flex items-center mb-2">
+                                    <div class="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-medium mr-3">1</div>
+                                    <h4 class="font-medium text-foreground">Identify the coefficients</h4>
+                                </div>
+                                <p class="text-muted-foreground text-sm mb-2 ml-9">In the standard form ax² + bx + c = 0:</p>
+                                <div class="ml-9">
+                                    <div class="math-expression">a = 1, b = 5, c = 6</div>
+                                </div>
+                            </div>
+
+                            <div class="step-card rounded-lg p-4">
+                                <div class="flex items-center mb-2">
+                                    <div class="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-medium mr-3">2</div>
+                                    <h4 class="font-medium text-foreground">Use the quadratic formula</h4>
+                                </div>
+                                <div class="ml-9">
+                                    <div class="math-expression">x = (-b ± √(b² - 4ac)) / 2a</div>
+                                </div>
+                            </div>
+
+                            <div class="step-card rounded-lg p-4">
+                                <div class="flex items-center mb-2">
+                                    <div class="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-medium mr-3">3</div>
+                                    <h4 class="font-medium text-foreground">Substitute the values</h4>
+                                </div>
+                                <div class="ml-9">
+                                    <div class="math-expression">x = (-5 ± √(25 - 24)) / 2</div>
+                                    <div class="math-expression">x = (-5 ± √1) / 2</div>
+                                    <div class="math-expression">x = (-5 ± 1) / 2</div>
+                                </div>
+                            </div>
+
+                            <div class="step-card rounded-lg p-4">
+                                <div class="flex items-center mb-2">
+                                    <div class="w-6 h-6 bg-secondary text-primary-foreground rounded-full flex items-center justify-center text-xs font-medium mr-3">✓</div>
+                                    <h4 class="font-medium text-foreground">Final Answer</h4>
+                                </div>
+                                <div class="ml-9">
+                                    <div class="math-expression">x₁ = (-5 + 1) / 2 = -2</div>
+                                    <div class="math-expression">x₂ = (-5 - 1) / 2 = -3</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex flex-wrap gap-2 mt-6">
+                            <button class="px-3 py-1.5 bg-muted text-muted-foreground rounded-lg text-xs hover:bg-border transition-colors flex items-center">
+                                <i class="fas fa-copy mr-1"></i>Copy Solution
+                            </button>
+                            <button class="px-3 py-1.5 bg-muted text-muted-foreground rounded-lg text-xs hover:bg-border transition-colors flex items-center">
+                                <i class="fas fa-bookmark mr-1"></i>Save
+                            </button>
+                            <button class="px-3 py-1.5 bg-muted text-muted-foreground rounded-lg text-xs hover:bg-border transition-colors flex items-center">
+                                <i class="fas fa-share mr-1"></i>Share
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex justify-start mt-1">
+                        <span class="text-xs text-muted-foreground">2:46 PM</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Follow-up Question -->
+            <div class="flex justify-end fade-in" data-mock="true">
+                <div class="max-w-lg">
+                    <div class="chat-bubble-user rounded-2xl rounded-br-md p-4 shadow-sm">
+                        <p class="text-foreground">Thanks! Can you explain why we use the quadratic formula instead of factoring?</p>
+                    </div>
+                    <div class="flex justify-end mt-1">
+                        <span class="text-xs text-muted-foreground">2:47 PM</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Typing Indicator -->
+            <div class="flex justify-start fade-in" data-mock="true">
+                <div class="max-w-2xl">
+                    <div class="chat-bubble-ai rounded-2xl rounded-bl-md p-4 shadow-sm">
+                        <div class="flex items-center">
+                            <div class="w-6 h-6 bg-primary rounded-full flex items-center justify-center mr-3">
+                                <i class="fas fa-robot text-primary-foreground text-xs"></i>
+                            </div>
+                            <div class="flex space-x-1">
+                                <div class="w-2 h-2 bg-muted-foreground rounded-full typing-indicator"></div>
+                                <div class="w-2 h-2 bg-muted-foreground rounded-full typing-indicator" style="animation-delay: 0.2s"></div>
+                                <div class="w-2 h-2 bg-muted-foreground rounded-full typing-indicator" style="animation-delay: 0.4s"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- @END_MAP )) -->
+    </main>
+    <!-- @END_COMPONENT: MainChatInterface -->
+
+    <!-- @COMPONENT: ChatInput [sticky bottom input area] -->
+    <div class="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border">
+        <div class="max-w-4xl mx-auto p-4">
+            <!-- File Upload Dropzone (Hidden by default) -->
+            <div class="upload-dropzone rounded-lg p-6 mb-4 text-center transition-all hidden" id="uploadZone" data-implementation="Toggle visibility based on drag events">
+                <i class="fas fa-cloud-upload-alt text-3xl text-muted-foreground mb-2"></i>
+                <p class="text-muted-foreground mb-1">Drop your homework image here</p>
+                <p class="text-xs text-muted-foreground">Supports JPG, PNG, PDF files up to 10MB</p>
+                <input type="file" class="hidden" accept="image/*,.pdf" data-implementation="File input handling" />
+            </div>
+
+            <!-- Chat Input Area -->
+            <div class="bg-card rounded-2xl border border-border shadow-lg">
+                <div class="flex items-end p-4 space-x-3">
+                    <!-- File Upload Button -->
+                    <button class="flex-shrink-0 w-10 h-10 bg-muted text-muted-foreground rounded-xl flex items-center justify-center hover:bg-border transition-colors" data-event="click:openFileDialog">
+                        <i class="fas fa-paperclip text-sm"></i>
+                    </button>
+
+                    <!-- Image Upload Button -->
+                    <button class="flex-shrink-0 w-10 h-10 bg-muted text-muted-foreground rounded-xl flex items-center justify-center hover:bg-border transition-colors" data-event="click:openImageDialog">
+                        <i class="fas fa-image text-sm"></i>
+                    </button>
+
+                    <!-- Text Input -->
+                    <div class="flex-1 relative">
+                        <textarea 
+                            class="w-full resize-none border-0 bg-transparent text-foreground placeholder:text-muted-foreground focus:outline-none min-h-[2.5rem] max-h-32 py-3 pr-12" 
+                            placeholder="Ask a question or describe your problem..."
+                            rows="1"
+                            data-implementation="Auto-resize textarea based on content"
+                            data-mock="true"></textarea>
+                        
+                        <!-- Character Counter -->
+                        <div class="absolute bottom-1 right-1 text-xs text-muted-foreground">
+                            <span data-bind="messageLength">0</span>/2000
+                        </div>
+                    </div>
+
+                    <!-- Send Button -->
+                    <button class="flex-shrink-0 w-10 h-10 bg-primary text-primary-foreground rounded-xl flex items-center justify-center hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" data-event="click:sendMessage" data-implementation="Validate input before sending">
+                        <i class="fas fa-paper-plane text-sm"></i>
+                    </button>
+                </div>
+
+                <!-- Quick Suggestions -->
+                <div class="px-4 pb-4" data-mock="true">
+                    <div class="flex flex-wrap gap-2">
+                        <button class="px-3 py-1.5 bg-muted text-muted-foreground rounded-lg text-xs hover:bg-border transition-colors">
+                            Solve this equation
+                        </button>
+                        <button class="px-3 py-1.5 bg-muted text-muted-foreground rounded-lg text-xs hover:bg-border transition-colors">
+                            Explain the steps
+                        </button>
+                        <button class="px-3 py-1.5 bg-muted text-muted-foreground rounded-lg text-xs hover:bg-border transition-colors">
+                            Check my work
+                        </button>
+                        <button class="px-3 py-1.5 bg-muted text-muted-foreground rounded-lg text-xs hover:bg-border transition-colors">
+                            Similar problems
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Usage Stats -->
+            <div class="flex justify-center mt-3" data-mock="true">
+                <p class="text-xs text-muted-foreground">
+                    <span data-bind="questionsToday">12</span> questions today • 
+                    <span data-bind="questionsRemaining">88</span> remaining
+                </p>
+            </div>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: ChatInput -->
+
+    <!-- Toast Notification (Hidden by default) -->
+    <div class="fixed top-4 right-4 bg-card border border-border rounded-lg shadow-lg p-4 hidden" id="toast" data-implementation="Show/hide based on actions">
+        <div class="flex items-center space-x-3">
+            <div class="w-6 h-6 bg-secondary rounded-full flex items-center justify-center">
+                <i class="fas fa-check text-primary-foreground text-xs"></i>
+            </div>
+            <p class="text-sm text-foreground">Solution copied to clipboard!</p>
+        </div>
+    </div>
+
+    <script>
+        // TODO: Implement business logic, API calls, and state management
+        (() => {
+            // Textarea auto-resize functionality
+            const textarea = document.querySelector('textarea');
+            if (textarea) {
+                textarea.addEventListener('input', function() {
+                    this.style.height = 'auto';
+                    this.style.height = this.scrollHeight + 'px';
+                });
+            }
+
+            // File upload drag and drop
+            let dragCounter = 0;
+            const uploadZone = document.getElementById('uploadZone');
+            
+            document.addEventListener('dragenter', (e) => {
+                e.preventDefault();
+                dragCounter++;
+                if (uploadZone) {
+                    uploadZone.classList.remove('hidden');
+                    uploadZone.classList.add('dragover');
+                }
+            });
+
+            document.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                dragCounter--;
+                if (dragCounter === 0 && uploadZone) {
+                    uploadZone.classList.add('hidden');
+                    uploadZone.classList.remove('dragover');
+                }
+            });
+
+            document.addEventListener('dragover', (e) => {
+                e.preventDefault();
+            });
+
+            document.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dragCounter = 0;
+                if (uploadZone) {
+                    uploadZone.classList.add('hidden');
+                    uploadZone.classList.remove('dragover');
+                }
+                // TODO: Handle file drop
+                console.log('Files dropped:', e.dataTransfer.files);
+            });
+
+            // Quick suggestion clicks
+            document.addEventListener('click', (e) => {
+                if (e.target.closest('[data-event*="click"]')) {
+                    e.preventDefault();
+                    // TODO: Handle button clicks based on data-event attribute
+                    console.log('Button clicked:', e.target.textContent);
+                }
+            });
+
+            // Auto-scroll to bottom when new messages arrive
+            function scrollToBottom() {
+                window.scrollTo({
+                    top: document.body.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }
+
+            // Simulate typing indicator
+            setTimeout(() => {
+                const typingIndicator = document.querySelector('.typing-indicator').closest('.fade-in');
+                if (typingIndicator) {
+                    typingIndicator.style.display = 'none';
+                }
+            }, 3000);
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,559 @@
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Study Tutor - Intelligent Problem Solving</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                borderRadius: {
+                    lg: "var(--radius)",
+                    md: "calc(var(--radius) - 2px)",
+                    sm: "calc(var(--radius) - 4px)",
+                },
+                colors: {
+                    background: "var(--background)",
+                    foreground: "var(--foreground)",
+                    card: {
+                        DEFAULT: "var(--card)",
+                        foreground: "var(--card-foreground)",
+                    },
+                    primary: {
+                        DEFAULT: "var(--primary)",
+                        foreground: "var(--primary-foreground)",
+                    },
+                    secondary: {
+                        DEFAULT: "var(--secondary)",
+                        foreground: "var(--secondary-foreground)",
+                    },
+                    muted: {
+                        DEFAULT: "var(--muted)",
+                        foreground: "var(--muted-foreground)",
+                    },
+                    accent: {
+                        DEFAULT: "var(--accent)",
+                        foreground: "var(--accent-foreground)",
+                    },
+                    border: "var(--border)",
+                    input: "var(--input)",
+                    ring: "var(--ring)",
+                }
+            },
+            fontFamily: {
+                sans: ["var(--font-sans)"],
+            }
+        }
+    };
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --background: hsl(210 20% 98%);
+            --foreground: hsl(222 84% 5%);
+            --card: hsl(0 0% 100%);
+            --card-foreground: hsl(222 84% 5%);
+            --primary: hsl(239 84% 67%);
+            --primary-foreground: hsl(0 0% 98%);
+            --secondary: hsl(158 64% 52%);
+            --secondary-foreground: hsl(0 0% 98%);
+            --muted: hsl(210 40% 96%);
+            --muted-foreground: hsl(215 16% 47%);
+            --accent: hsl(43 96% 56%);
+            --accent-foreground: hsl(222 84% 5%);
+            --border: hsl(214 32% 91%);
+            --input: hsl(214 32% 91%);
+            --ring: hsl(239 84% 67%);
+            --radius: 0.75rem;
+            --font-sans: 'Inter', system-ui, sans-serif;
+        }
+        
+        * {
+            border-color: hsl(var(--border));
+        }
+        
+        body {
+            background-color: hsl(var(--background));
+            color: hsl(var(--foreground));
+            font-family: var(--font-sans);
+        }
+        
+        .chat-bubble-user {
+            background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(239 84% 72%) 100%);
+            color: hsl(var(--primary-foreground));
+        }
+        
+        .chat-bubble-ai {
+            background: hsl(239 84% 97%);
+            color: hsl(var(--foreground));
+            border: 1px solid hsl(239 84% 92%);
+        }
+        
+        .math-expression {
+            background: hsl(var(--muted));
+            border: 1px solid hsl(var(--border));
+            border-radius: calc(var(--radius) - 2px);
+            padding: 0.75rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+        }
+        
+        .step-number {
+            background: linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(43 96% 61%) 100%);
+            color: hsl(var(--accent-foreground));
+            font-weight: 600;
+        }
+        
+        .typing-dots {
+            animation: typing 1.4s infinite ease-in-out;
+        }
+        
+        .typing-dots:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dots:nth-child(2) { animation-delay: -0.16s; }
+        
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+        
+        .upload-dropzone {
+            border: 2px dashed hsl(var(--border));
+            transition: all 0.3s ease;
+        }
+        
+        .upload-dropzone.drag-over {
+            border-color: hsl(var(--primary));
+            background-color: hsl(239 84% 98%);
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .hover-lift {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .hover-lift:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col">
+    <!-- @COMPONENT: Header [navigation and branding] -->
+    <header class="border-b bg-card shadow-sm sticky top-0 z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
+                        <i class="fas fa-graduation-cap text-primary-foreground text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-foreground">AI Study Tutor</h1>
+                        <p class="text-sm text-muted-foreground">Intelligent Problem Solving</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <button class="p-2 rounded-lg hover:bg-muted transition-colors" data-implementation="Settings menu">
+                        <i class="fas fa-cog text-muted-foreground"></i>
+                    </button>
+                    <button class="p-2 rounded-lg hover:bg-muted transition-colors" data-implementation="User profile menu">
+                        <i class="fas fa-user-circle text-muted-foreground text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+    <!-- @END_COMPONENT: Header -->
+
+    <!-- @COMPONENT: MainChatInterface [chat messages and interaction area] -->
+    <main class="flex-1 flex flex-col max-w-4xl mx-auto w-full">
+        <!-- Welcome Section -->
+        <div class="p-6 text-center border-b bg-gradient-to-br from-primary/5 to-accent/5">
+            <div class="max-w-2xl mx-auto">
+                <h2 class="text-2xl font-bold text-foreground mb-2">Welcome to AI Study Tutor</h2>
+                <p class="text-muted-foreground mb-4">Ask questions, upload images of problems, and get detailed step-by-step solutions powered by advanced AI.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                    <div class="bg-card rounded-xl p-4 shadow-sm hover-lift">
+                        <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-comments text-primary text-xl"></i>
+                        </div>
+                        <h3 class="font-semibold text-foreground mb-1">Ask Questions</h3>
+                        <p class="text-sm text-muted-foreground">Type any math, science, or academic question</p>
+                    </div>
+                    
+                    <div class="bg-card rounded-xl p-4 shadow-sm hover-lift">
+                        <div class="w-12 h-12 bg-secondary/10 rounded-lg flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-camera text-secondary text-xl"></i>
+                        </div>
+                        <h3 class="font-semibold text-foreground mb-1">Upload Images</h3>
+                        <p class="text-sm text-muted-foreground">Take photos of homework problems</p>
+                    </div>
+                    
+                    <div class="bg-card rounded-xl p-4 shadow-sm hover-lift">
+                        <div class="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-lightbulb text-accent text-xl"></i>
+                        </div>
+                        <h3 class="font-semibold text-foreground mb-1">Get Solutions</h3>
+                        <p class="text-sm text-muted-foreground">Receive detailed step-by-step explanations</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Messages Area -->
+        <div class="flex-1 overflow-y-auto px-4 py-6 space-y-6" id="chat-messages">
+            <!-- @MAP: messages.map(message => ( -->
+            
+            <!-- User Message Example -->
+            <div class="flex justify-end fade-in">
+                <div class="max-w-xs sm:max-w-md lg:max-w-lg">
+                    <div class="chat-bubble-user rounded-2xl px-4 py-3 shadow-sm">
+                        <p class="text-sm" data-mock="true">Solve this quadratic equation: 2x² + 5x - 3 = 0</p>
+                    </div>
+                    <div class="flex items-center justify-end mt-1 space-x-2">
+                        <span class="text-xs text-muted-foreground" data-bind="message.timestamp">2:34 PM</span>
+                        <div class="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
+                            <i class="fas fa-user text-primary-foreground text-xs"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Response Example -->
+            <div class="flex justify-start fade-in">
+                <div class="max-w-xs sm:max-w-md lg:max-w-2xl">
+                    <div class="flex items-start space-x-3">
+                        <div class="w-8 h-8 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                            <i class="fas fa-robot text-white text-sm"></i>
+                        </div>
+                        <div class="chat-bubble-ai rounded-2xl px-4 py-4 shadow-sm">
+                            <div class="mb-3">
+                                <p class="text-sm font-medium text-foreground mb-2" data-mock="true">I'll solve this quadratic equation step by step using the quadratic formula.</p>
+                            </div>
+                            
+                            <!-- Step-by-step solution -->
+                            <div class="space-y-4">
+                                <div class="flex items-start space-x-3">
+                                    <span class="step-number w-6 h-6 rounded-full flex items-center justify-center text-xs flex-shrink-0 mt-0.5">1</span>
+                                    <div class="flex-1">
+                                        <p class="text-sm text-foreground mb-2" data-mock="true">Identify the coefficients in the standard form ax² + bx + c = 0:</p>
+                                        <div class="math-expression">
+                                            <p data-mock="true">a = 2, b = 5, c = -3</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-start space-x-3">
+                                    <span class="step-number w-6 h-6 rounded-full flex items-center justify-center text-xs flex-shrink-0 mt-0.5">2</span>
+                                    <div class="flex-1">
+                                        <p class="text-sm text-foreground mb-2" data-mock="true">Apply the quadratic formula:</p>
+                                        <div class="math-expression">
+                                            <p data-mock="true">x = (-b ± √(b² - 4ac)) / (2a)</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-start space-x-3">
+                                    <span class="step-number w-6 h-6 rounded-full flex items-center justify-center text-xs flex-shrink-0 mt-0.5">3</span>
+                                    <div class="flex-1">
+                                        <p class="text-sm text-foreground mb-2" data-mock="true">Calculate the discriminant:</p>
+                                        <div class="math-expression">
+                                            <p data-mock="true">b² - 4ac = 5² - 4(2)(-3) = 25 + 24 = 49</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-start space-x-3">
+                                    <span class="step-number w-6 h-6 rounded-full flex items-center justify-center text-xs flex-shrink-0 mt-0.5">4</span>
+                                    <div class="flex-1">
+                                        <p class="text-sm text-foreground mb-2" data-mock="true">Substitute into the formula:</p>
+                                        <div class="math-expression">
+                                            <p data-mock="true">x = (-5 ± √49) / (2×2) = (-5 ± 7) / 4</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-secondary/10 rounded-lg p-3 border border-secondary/20">
+                                    <p class="text-sm font-medium text-foreground mb-1" data-mock="true">Final Answer:</p>
+                                    <div class="math-expression bg-secondary/5">
+                                        <p data-mock="true">x₁ = (-5 + 7) / 4 = 1/2</p>
+                                        <p data-mock="true">x₂ = (-5 - 7) / 4 = -3</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center justify-between mt-4 pt-3 border-t border-border/50">
+                                <span class="text-xs text-muted-foreground" data-bind="message.timestamp">2:34 PM</span>
+                                <div class="flex items-center space-x-2">
+                                    <button class="p-1.5 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground" data-implementation="Copy solution to clipboard">
+                                        <i class="fas fa-copy text-xs"></i>
+                                    </button>
+                                    <button class="p-1.5 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground" data-implementation="Thumbs up feedback">
+                                        <i class="fas fa-thumbs-up text-xs"></i>
+                                    </button>
+                                    <button class="p-1.5 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground" data-implementation="Thumbs down feedback">
+                                        <i class="fas fa-thumbs-down text-xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Follow-up Question -->
+            <div class="flex justify-end fade-in">
+                <div class="max-w-xs sm:max-w-md lg:max-w-lg">
+                    <div class="chat-bubble-user rounded-2xl px-4 py-3 shadow-sm">
+                        <p class="text-sm" data-mock="true">Can you explain why we use the quadratic formula here?</p>
+                    </div>
+                    <div class="flex items-center justify-end mt-1 space-x-2">
+                        <span class="text-xs text-muted-foreground" data-bind="message.timestamp">2:35 PM</span>
+                        <div class="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
+                            <i class="fas fa-user text-primary-foreground text-xs"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Image Upload Example -->
+            <div class="flex justify-end fade-in">
+                <div class="max-w-xs sm:max-w-md lg:max-w-lg">
+                    <div class="chat-bubble-user rounded-2xl px-4 py-3 shadow-sm">
+                        <p class="text-sm mb-3" data-mock="true">Can you help me solve this calculus problem?</p>
+                        <!-- Mathematical equation photograph showing a complex integral problem -->
+                        <img src="https://images.unsplash.com/photo-1635070041078-e363dbe005cb?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&h=400" alt="Mathematical equation on paper" class="rounded-lg w-full h-auto max-w-sm" data-mock-image="true" data-implementation="User uploaded image of math problem" />
+                    </div>
+                    <div class="flex items-center justify-end mt-1 space-x-2">
+                        <span class="text-xs text-muted-foreground" data-bind="message.timestamp">2:36 PM</span>
+                        <div class="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
+                            <i class="fas fa-user text-primary-foreground text-xs"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Typing Indicator -->
+            <div class="flex justify-start fade-in">
+                <div class="max-w-xs sm:max-w-md lg:max-w-lg">
+                    <div class="flex items-start space-x-3">
+                        <div class="w-8 h-8 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                            <i class="fas fa-robot text-white text-sm"></i>
+                        </div>
+                        <div class="chat-bubble-ai rounded-2xl px-4 py-3 shadow-sm">
+                            <div class="flex items-center space-x-1">
+                                <span class="text-sm text-muted-foreground" data-mock="true">AI is analyzing your image</span>
+                                <div class="flex space-x-1 ml-2">
+                                    <div class="w-2 h-2 bg-primary/60 rounded-full typing-dots"></div>
+                                    <div class="w-2 h-2 bg-primary/60 rounded-full typing-dots"></div>
+                                    <div class="w-2 h-2 bg-primary/60 rounded-full typing-dots"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- @END_MAP )) -->
+        </div>
+
+        <!-- Input Area -->
+        <div class="border-t bg-card/50 backdrop-blur-sm sticky bottom-0">
+            <div class="p-4 max-w-4xl mx-auto">
+                <!-- File Upload Dropzone (Initially Hidden) -->
+                <div class="upload-dropzone rounded-xl p-6 mb-4 text-center hidden" id="upload-zone" data-implementation="Drag and drop file upload functionality">
+                    <div class="max-w-sm mx-auto">
+                        <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-cloud-upload-alt text-primary text-2xl"></i>
+                        </div>
+                        <h3 class="text-lg font-semibold text-foreground mb-2">Upload Problem Image</h3>
+                        <p class="text-sm text-muted-foreground mb-4">Drag and drop an image of your homework problem, or click to browse.</p>
+                        <button class="bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors">
+                            Choose File
+                        </button>
+                        <p class="text-xs text-muted-foreground mt-2">Supports JPG, PNG, and PDF files up to 10MB</p>
+                    </div>
+                </div>
+
+                <!-- Input Controls -->
+                <div class="flex items-end space-x-3">
+                    <div class="flex-1">
+                        <div class="relative">
+                            <textarea 
+                                placeholder="Ask a question or describe a problem you need help with..." 
+                                class="w-full min-h-[44px] max-h-32 px-4 py-3 pr-12 bg-input border border-border rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-sm placeholder:text-muted-foreground"
+                                rows="1"
+                                data-implementation="Auto-resize textarea based on content"
+                                data-mock="true"
+                            ></textarea>
+                            <button class="absolute right-3 top-1/2 transform -translate-y-1/2 p-1.5 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground" data-implementation="Toggle file upload zone">
+                                <i class="fas fa-paperclip"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <button class="bg-primary text-primary-foreground p-3 rounded-xl hover:bg-primary/90 transition-colors shadow-sm hover-lift" data-implementation="Send message or process uploaded image">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+                
+                <!-- Quick Action Buttons -->
+                <div class="flex items-center justify-center space-x-4 mt-4">
+                    <button class="flex items-center space-x-2 px-3 py-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-sm text-muted-foreground hover:text-foreground" data-implementation="Insert math symbols">
+                        <i class="fas fa-square-root-alt"></i>
+                        <span>Math Symbols</span>
+                    </button>
+                    <button class="flex items-center space-x-2 px-3 py-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-sm text-muted-foreground hover:text-foreground" data-implementation="Start new conversation">
+                        <i class="fas fa-plus"></i>
+                        <span>New Chat</span>
+                    </button>
+                    <button class="flex items-center space-x-2 px-3 py-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-sm text-muted-foreground hover:text-foreground" data-implementation="Show conversation history">
+                        <i class="fas fa-history"></i>
+                        <span>History</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+    <!-- @END_COMPONENT: MainChatInterface -->
+
+    <!-- @COMPONENT: ToastNotifications [feedback and status messages] -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2" data-implementation="Toast notification system">
+        <!-- Example toast (initially hidden) -->
+        <div class="bg-secondary text-secondary-foreground px-4 py-3 rounded-lg shadow-lg transform translate-x-full opacity-0 transition-all duration-300 hidden">
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-check-circle"></i>
+                <span class="text-sm font-medium">Solution copied to clipboard!</span>
+            </div>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: ToastNotifications -->
+
+    <script>
+        // TODO: Implement business logic, API calls, and state management
+        
+        // Basic UI interactions (IIFE to avoid global pollution)
+        (function() {
+            // Auto-resize textarea
+            const textarea = document.querySelector('textarea');
+            if (textarea) {
+                textarea.addEventListener('input', function() {
+                    this.style.height = 'auto';
+                    this.style.height = this.scrollHeight + 'px';
+                });
+            }
+
+            // File upload toggle
+            const attachButton = document.querySelector('[data-implementation="Toggle file upload zone"]');
+            const uploadZone = document.getElementById('upload-zone');
+            
+            if (attachButton && uploadZone) {
+                attachButton.addEventListener('click', function() {
+                    uploadZone.classList.toggle('hidden');
+                });
+            }
+
+            // Drag and drop handlers
+            if (uploadZone) {
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    uploadZone.addEventListener(eventName, preventDefaults, false);
+                });
+
+                function preventDefaults(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+
+                ['dragenter', 'dragover'].forEach(eventName => {
+                    uploadZone.addEventListener(eventName, highlight, false);
+                });
+
+                ['dragleave', 'drop'].forEach(eventName => {
+                    uploadZone.addEventListener(eventName, unhighlight, false);
+                });
+
+                function highlight(e) {
+                    uploadZone.classList.add('drag-over');
+                }
+
+                function unhighlight(e) {
+                    uploadZone.classList.remove('drag-over');
+                }
+            }
+
+            // Auto-scroll to bottom of chat
+            function scrollToBottom() {
+                const chatMessages = document.getElementById('chat-messages');
+                if (chatMessages) {
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }
+            }
+
+            // Simulate typing effect for demo
+            function simulateTyping() {
+                // This would be replaced with real WebSocket or API integration
+                console.log('Typing simulation...');
+            }
+
+            // Copy to clipboard functionality
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('[data-implementation="Copy solution to clipboard"]')) {
+                    // TODO: Implement actual copy functionality
+                    console.log('Copy to clipboard triggered');
+                    showToast('Solution copied to clipboard!', 'success');
+                }
+            });
+
+            // Toast notification system
+            function showToast(message, type = 'info') {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                
+                const bgColor = type === 'success' ? 'bg-secondary' : 'bg-primary';
+                const textColor = type === 'success' ? 'text-secondary-foreground' : 'text-primary-foreground';
+                
+                toast.className = `${bgColor} ${textColor} px-4 py-3 rounded-lg shadow-lg transform transition-all duration-300`;
+                toast.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'}"></i>
+                        <span class="text-sm font-medium">${message}</span>
+                    </div>
+                `;
+                
+                container.appendChild(toast);
+                
+                // Animate in
+                setTimeout(() => {
+                    toast.classList.add('translate-x-0');
+                    toast.classList.remove('translate-x-full', 'opacity-0');
+                }, 100);
+                
+                // Auto-remove after 3 seconds
+                setTimeout(() => {
+                    toast.classList.add('translate-x-full', 'opacity-0');
+                    setTimeout(() => {
+                        if (container.contains(toast)) {
+                            container.removeChild(toast);
+                        }
+                    }, 300);
+                }, 3000);
+            }
+
+            // Initialize scroll position
+            scrollToBottom();
+        })();
+    </script>
+</body>
+</html>

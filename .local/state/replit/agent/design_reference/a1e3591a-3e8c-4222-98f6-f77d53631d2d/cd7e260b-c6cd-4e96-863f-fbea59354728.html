@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Study Tutor - Intelligent Problem Solver</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/heroicons/2.0.18/24/outline/heroicons.min.css">
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                borderRadius: {
+                    lg: "var(--radius)",
+                    md: "calc(var(--radius) - 2px)",
+                    sm: "calc(var(--radius) - 4px)",
+                },
+                colors: {
+                    background: "var(--background)",
+                    foreground: "var(--foreground)",
+                    card: {
+                        DEFAULT: "var(--card)",
+                        foreground: "var(--card-foreground)",
+                    },
+                    popover: {
+                        DEFAULT: "var(--popover)",
+                        foreground: "var(--popover-foreground)",
+                    },
+                    primary: {
+                        DEFAULT: "var(--primary)",
+                        foreground: "var(--primary-foreground)",
+                    },
+                    secondary: {
+                        DEFAULT: "var(--secondary)",
+                        foreground: "var(--secondary-foreground)",
+                    },
+                    muted: {
+                        DEFAULT: "var(--muted)",
+                        foreground: "var(--muted-foreground)",
+                    },
+                    accent: {
+                        DEFAULT: "var(--accent)",
+                        foreground: "var(--accent-foreground)",
+                    },
+                    destructive: {
+                        DEFAULT: "var(--destructive)",
+                        foreground: "var(--destructive-foreground)",
+                    },
+                    border: "var(--border)",
+                    input: "var(--input)",
+                    ring: "var(--ring)",
+                },
+                fontFamily: {
+                    sans: ["var(--font-sans)"],
+                }
+            },
+        }
+    };
+    </script>
+    <style>
+        :root {
+            --background: hsl(210 20% 98%);
+            --foreground: hsl(222.2 84% 4.9%);
+            --card: hsl(0 0% 100%);
+            --card-foreground: hsl(222.2 84% 4.9%);
+            --popover: hsl(0 0% 100%);
+            --popover-foreground: hsl(222.2 84% 4.9%);
+            --primary: hsl(238.7 83.5% 66.7%);
+            --primary-foreground: hsl(0 0% 100%);
+            --secondary: hsl(158.1 64.4% 51.6%);
+            --secondary-foreground: hsl(0 0% 100%);
+            --muted: hsl(210 40% 96%);
+            --muted-foreground: hsl(215.4 16.3% 46.9%);
+            --accent: hsl(43.3 96.4% 56.3%);
+            --accent-foreground: hsl(0 0% 100%);
+            --destructive: hsl(0 84.2% 60.2%);
+            --destructive-foreground: hsl(0 0% 100%);
+            --border: hsl(214.3 31.8% 91.4%);
+            --input: hsl(214.3 31.8% 91.4%);
+            --ring: hsl(238.7 83.5% 66.7%);
+            --radius: 0.75rem;
+            --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+        
+        body {
+            font-family: var(--font-sans);
+            background-color: hsl(var(--background));
+            color: hsl(var(--foreground));
+        }
+
+        .chat-bubble-user {
+            background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(238.7 83.5% 76.7%) 100%);
+            color: hsl(var(--primary-foreground));
+        }
+
+        .chat-bubble-ai {
+            background: hsl(239 84% 97%);
+            color: hsl(var(--foreground));
+            border: 1px solid hsl(var(--border));
+        }
+
+        .math-expression {
+            background: hsl(var(--muted));
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            font-family: 'Courier New', monospace;
+            font-weight: 500;
+        }
+
+        .solution-step {
+            background: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-left: 4px solid hsl(var(--primary));
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-radius: 0.5rem;
+        }
+
+        .upload-dropzone {
+            border: 2px dashed hsl(var(--border));
+            background: hsl(var(--muted));
+            transition: all 0.3s ease;
+        }
+
+        .upload-dropzone:hover,
+        .upload-dropzone.drag-over {
+            border-color: hsl(var(--primary));
+            background: hsl(239 84% 97%);
+        }
+
+        .typing-indicator {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+
+        .message-fade-in {
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-background">
+    <!-- @COMPONENT: Header -->
+    <header class="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
+        <div class="container mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                    <svg class="w-5 h-5 text-primary-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-xl font-semibold text-foreground">AI Study Tutor</h1>
+                    <p class="text-sm text-muted-foreground">Intelligent Problem Solver</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button class="p-2 hover:bg-muted rounded-lg transition-colors">
+                    <svg class="w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
+                </button>
+                <button class="p-2 hover:bg-muted rounded-lg transition-colors">
+                    <svg class="w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+    <!-- @END_COMPONENT: Header -->
+
+    <!-- @COMPONENT: MainContent -->
+    <main class="flex-1 flex flex-col h-screen pt-16">
+        <!-- Chat Messages Container -->
+        <div class="flex-1 overflow-y-auto scrollbar-hide px-4 py-6" id="chatContainer">
+            <div class="max-w-4xl mx-auto space-y-6">
+                
+                <!-- Welcome Message -->
+                <div class="text-center py-8">
+                    <div class="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-primary-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                        </svg>
+                    </div>
+                    <h2 class="text-2xl font-semibold text-foreground mb-2">Welcome to AI Study Tutor!</h2>
+                    <p class="text-muted-foreground max-w-md mx-auto">Ask me any question or upload a photo of your homework problem. I'll provide step-by-step solutions and explanations.</p>
+                </div>
+
+                <!-- Sample User Message -->
+                <!-- @MESSAGE: User Message Example -->
+                <div class="flex justify-end mb-4">
+                    <div class="max-w-xs sm:max-w-md lg:max-w-lg">
+                        <div class="chat-bubble-user rounded-2xl rounded-br-md px-4 py-3 shadow-sm">
+                            <p class="text-sm font-medium" data-mock="true">Can you help me solve this quadratic equation: x² + 5x + 6 = 0?</p>
+                        </div>
+                        <div class="text-xs text-muted-foreground mt-1 text-right" data-mock="true">2:34 PM</div>
+                    </div>
+                </div>
+
+                <!-- AI Response with Step-by-Step Solution -->
+                <!-- @MESSAGE: AI Response Example -->
+                <div class="flex justify-start mb-6">
+                    <div class="max-w-xs sm:max-w-md lg:max-w-2xl">
+                        <div class="flex items-start space-x-3">
+                            <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                                <svg class="w-4 h-4 text-primary-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <div class="chat-bubble-ai rounded-2xl rounded-bl-md px-4 py-3 shadow-sm">
+                                    <p class="text-sm mb-3" data-mock="true">I'll help you solve this quadratic equation step by step! Let me break down the solution for x² + 5x + 6 = 0.</p>
+                                    
+                                    <!-- Step-by-Step Solution -->
+                                    <div class="space-y-3">
+                                        <div class="solution-step">
+                                            <div class="flex items-center justify-between mb-2">
+                                                <h4 class="font-semibold text-primary text-sm">Step 1: Identify the coefficients</h4>
+                                                <button class="text-muted-foreground hover:text-foreground p-1" title="Copy step">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                            <p class="text-sm text-muted-foreground mb-2" data-mock="true">In the equation ax² + bx + c = 0:</p>
+                                            <div class="math-expression text-sm" data-mock="true">a = 1, b = 5, c = 6</div>
+                                        </div>
+
+                                        <div class="solution-step">
+                                            <div class="flex items-center justify-between mb-2">
+                                                <h4 class="font-semibold text-primary text-sm">Step 2: Factor the equation</h4>
+                                                <button class="text-muted-foreground hover:text-foreground p-1" title="Copy step">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                            <p class="text-sm text-muted-foreground mb-2" data-mock="true">Find two numbers that multiply to 6 and add to 5:</p>
+                                            <div class="math-expression text-sm" data-mock="true">x² + 5x + 6 = (x + 2)(x + 3) = 0</div>
+                                        </div>
+
+                                        <div class="solution-step">
+                                            <div class="flex items-center justify-between mb-2">
+                                                <h4 class="font-semibold text-primary text-sm">Step 3: Solve for x</h4>
+                                                <button class="text-muted-foreground hover:text-foreground p-1" title="Copy step">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                            <p class="text-sm text-muted-foreground mb-2" data-mock="true">Set each factor equal to zero:</p>
+                                            <div class="math-expression text-sm mb-2" data-mock="true">x + 2 = 0  →  x = -2</div>
+                                            <div class="math-expression text-sm" data-mock="true">x + 3 = 0  →  x = -3</div>
+                                        </div>
+
+                                        <div class="bg-secondary/10 border border-secondary/20 rounded-lg p-3 mt-4">
+                                            <div class="flex items-center space-x-2 mb-2">
+                                                <svg class="w-4 h-4 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                </svg>
+                                                <h4 class="font-semibold text-secondary text-sm">Final Answer</h4>
+                                            </div>
+                                            <div class="math-expression text-sm font-semibold" data-mock="true">x = -2 or x = -3</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-center justify-between mt-4 pt-3 border-t border-border">
+                                        <button class="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors text-sm" data-event="click:copyFullSolution">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                            </svg>
+                                            <span>Copy Solution</span>
+                                        </button>
+                                        <div class="flex items-center space-x-3">
+                                            <button class="text-muted-foreground hover:text-foreground p-1" title="Helpful">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"></path>
+                                                </svg>
+                                            </button>
+                                            <button class="text-muted-foreground hover:text-foreground p-1" title="Not helpful">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018a2 2 0 01.485.06l3.76.7m-7 10v5a2 2 0 002 2h.096c.5 0 .905-.405.905-.904 0-.715.211-1.413.608-2.008L17 13V4m-7 10h2m5-10h2a2 2 0 012 2v6a2 2 0 01-2 2h-2.5"></path>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-xs text-muted-foreground mt-1" data-mock="true">2:34 PM</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Follow-up User Question -->
+                <div class="flex justify-end mb-4">
+                    <div class="max-w-xs sm:max-w-md lg:max-w-lg">
+                        <div class="chat-bubble-user rounded-2xl rounded-br-md px-4 py-3 shadow-sm">
+                            <p class="text-sm font-medium" data-mock="true">Can you explain how you knew to factor it that way?</p>
+                        </div>
+                        <div class="text-xs text-muted-foreground mt-1 text-right" data-mock="true">2:35 PM</div>
+                    </div>
+                </div>
+
+                <!-- AI Follow-up Response -->
+                <div class="flex justify-start mb-6">
+                    <div class="max-w-xs sm:max-w-md lg:max-w-2xl">
+                        <div class="flex items-start space-x-3">
+                            <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                                <svg class="w-4 h-4 text-primary-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <div class="chat-bubble-ai rounded-2xl rounded-bl-md px-4 py-3 shadow-sm">
+                                    <p class="text-sm mb-3" data-mock="true">Great question! Let me explain the factoring process:</p>
+                                    
+                                    <div class="bg-muted rounded-lg p-3 mb-3">
+                                        <p class="text-sm font-medium mb-2" data-mock="true">For x² + 5x + 6, I need two numbers that:</p>
+                                        <ul class="text-sm space-y-1 ml-4">
+                                            <li class="flex items-center" data-mock="true">
+                                                <span class="w-2 h-2 bg-secondary rounded-full mr-2"></span>
+                                                Multiply to give 6 (the constant term)
+                                            </li>
+                                            <li class="flex items-center" data-mock="true">
+                                                <span class="w-2 h-2 bg-secondary rounded-full mr-2"></span>
+                                                Add to give 5 (the coefficient of x)
+                                            </li>
+                                        </ul>
+                                    </div>
+
+                                    <p class="text-sm" data-mock="true">The pairs that multiply to 6 are: (1,6), (2,3), (-1,-6), (-2,-3). Since we need them to add to +5, we choose 2 and 3!</p>
+                                </div>
+                                <div class="text-xs text-muted-foreground mt-1" data-mock="true">2:35 PM</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Image Upload Example -->
+                <div class="flex justify-end mb-4">
+                    <div class="max-w-xs sm:max-w-md lg:max-w-lg">
+                        <div class="chat-bubble-user rounded-2xl rounded-br-md px-4 py-3 shadow-sm">
+                            <!-- Photo of handwritten math problem -->
+                            <div class="mb-3">
+                                <div class="bg-card rounded-lg border border-border p-2">
+                                    <img src="https://images.unsplash.com/photo-1635070041078-e363dbe005cb?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300" alt="Handwritten calculus problem" class="w-full h-32 object-cover rounded" data-mock-image="true" />
+                                    <p class="text-xs text-muted-foreground mt-1" data-mock="true">calculus_problem.jpg</p>
+                                </div>
+                            </div>
+                            <p class="text-sm font-medium" data-mock="true">Can you help me solve this calculus problem?</p>
+                        </div>
+                        <div class="text-xs text-muted-foreground mt-1 text-right" data-mock="true">2:38 PM</div>
+                    </div>
+                </div>
+
+                <!-- AI Typing Indicator -->
+                <div class="flex justify-start mb-6">
+                    <div class="max-w-xs sm:max-w-md lg:max-w-2xl">
+                        <div class="flex items-start space-x-3">
+                            <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                                <svg class="w-4 h-4 text-primary-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <div class="chat-bubble-ai rounded-2xl rounded-bl-md px-4 py-3 shadow-sm">
+                                    <div class="flex items-center space-x-2 typing-indicator">
+                                        <div class="flex space-x-1">
+                                            <div class="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"></div>
+                                            <div class="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+                                            <div class="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                                        </div>
+                                        <span class="text-sm text-muted-foreground" data-mock="true">Analyzing your image...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <!-- @COMPONENT: ChatInput -->
+        <div class="sticky bottom-0 bg-background/95 backdrop-blur border-t border-border">
+            <div class="max-w-4xl mx-auto p-4">
+                <!-- File Upload Dropzone (Hidden by default, shown when dragging) -->
+                <div id="uploadZone" class="upload-dropzone rounded-xl p-8 text-center mb-4 hidden" data-implementation="Show when files are dragged over the window">
+                    <svg class="w-12 h-12 text-muted-foreground mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                    <h3 class="text-lg font-semibold text-foreground mb-1" data-mock="true">Drop your problem image here</h3>
+                    <p class="text-muted-foreground" data-mock="true">Upload a photo of your homework or problem sheet</p>
+                </div>
+
+                <!-- Chat Input Container -->
+                <div class="bg-card rounded-2xl border border-border shadow-lg">
+                    <!-- Uploaded Files Preview (when files are selected) -->
+                    <div id="filesPreview" class="border-b border-border p-3 hidden" data-implementation="Show when files are selected">
+                        <div class="flex items-center space-x-3">
+                            <div class="flex-shrink-0 w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
+                                <svg class="w-6 h-6 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-sm font-medium text-foreground" data-mock="true">math_problem.jpg</p>
+                                <p class="text-xs text-muted-foreground" data-mock="true">2.3 MB • Ready to analyze</p>
+                            </div>
+                            <button class="text-muted-foreground hover:text-destructive p-1" title="Remove file">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Input Area -->
+                    <div class="flex items-end space-x-3 p-4">
+                        <!-- File Upload Button -->
+                        <input type="file" id="fileInput" class="hidden" accept="image/*" data-implementation="Handle image file selection">
+                        <button class="flex-shrink-0 p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors" 
+                                onclick="document.getElementById('fileInput').click()" title="Upload image">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+                            </svg>
+                        </button>
+
+                        <!-- Text Input -->
+                        <div class="flex-1 relative">
+                            <textarea 
+                                id="messageInput"
+                                placeholder="Ask a question or describe your problem..."
+                                class="w-full resize-none border-0 bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none max-h-32 min-h-[2.5rem]"
+                                rows="1"
+                                data-implementation="Auto-resize textarea based on content"
+                                data-mock="true"></textarea>
+                        </div>
+
+                        <!-- Send Button -->
+                        <button class="flex-shrink-0 p-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                id="sendButton" 
+                                data-event="click:handleSendMessage"
+                                data-implementation="Disable when input is empty or processing">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="px-4 pb-3">
+                        <div class="flex flex-wrap gap-2">
+                            <button class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-muted-foreground bg-muted hover:bg-muted/80 rounded-full transition-colors"
+                                    data-event="click:insertQuickAction" data-action="algebra">
+                                <svg class="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                                </svg>
+                                Algebra Help
+                            </button>
+                            <button class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-muted-foreground bg-muted hover:bg-muted/80 rounded-full transition-colors"
+                                    data-event="click:insertQuickAction" data-action="calculus">
+                                <svg class="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a1 1 0 01-1-1V9a1 1 0 011-1h1a2 2 0 100-4H4a1 1 0 01-1-1V4a1 1 0 011-1h3a1 1 0 011 1v1z"></path>
+                                </svg>
+                                Calculus Help
+                            </button>
+                            <button class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-muted-foreground bg-muted hover:bg-muted/80 rounded-full transition-colors"
+                                    data-event="click:insertQuickAction" data-action="geometry">
+                                <svg class="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+                                </svg>
+                                Geometry Help
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: ChatInput -->
+    </main>
+    <!-- @END_COMPONENT: MainContent -->
+
+    <!-- Toast Notification (Hidden by default) -->
+    <!-- @COMPONENT: ToastNotification -->
+    <div id="toast" class="fixed top-4 right-4 z-50 hidden" data-implementation="Show/hide with JavaScript for user feedback">
+        <div class="bg-card border border-border rounded-lg shadow-lg p-4 min-w-[300px]">
+            <div class="flex items-start space-x-3">
+                <div class="flex-shrink-0">
+                    <svg class="w-5 h-5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-foreground" data-mock="true">Solution copied!</p>
+                    <p class="text-xs text-muted-foreground" data-mock="true">The step-by-step solution has been copied to your clipboard.</p>
+                </div>
+                <button class="flex-shrink-0 text-muted-foreground hover:text-foreground">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: ToastNotification -->
+
+    <!-- Mobile Menu Overlay (Hidden by default) -->
+    <div id="mobileMenuOverlay" class="fixed inset-0 bg-black/50 z-40 lg:hidden hidden" data-implementation="Show/hide for mobile menu"></div>
+
+    <script>
+        // TODO: Implement business logic, API calls, and state management
+        (function() {
+            // Auto-resize textarea
+            const messageInput = document.getElementById('messageInput');
+            const sendButton = document.getElementById('sendButton');
+            
+            if (messageInput) {
+                messageInput.addEventListener('input', function() {
+                    this.style.height = 'auto';
+                    this.style.height = Math.min(this.scrollHeight, 128) + 'px';
+                    
+                    // Enable/disable send button based on content
+                    const hasContent = this.value.trim().length > 0;
+                    sendButton.disabled = !hasContent;
+                    sendButton.classList.toggle('opacity-50', !hasContent);
+                    sendButton.classList.toggle('cursor-not-allowed', !hasContent);
+                });
+            }
+
+            // FileLooking at this request, I need to create a web-based AI study tutor application. Let me analyze this using my design decision framework:
+
+1. Initial Analysis:
+- Specific aesthetic requirements: Inspired by ChatGPT's conversational interface and Photomath's problem-solving layout
+- This gives me clear design direction to follow
+
+Since specific aesthetic requirements are mentioned, I should use those as my primary design direction.
+
+Key features to include:
+- Chat-based interface
+- Image upload functionality  
+- Step-by-step solution generation
+- Follow-up question handling
+- Mobile-responsive design
+- File upload dropzone
+- Syntax highlighting for math
+- Loading states
+- Error handling
+
+The style guide is very specific:
+- Primary: #6366F1 (indigo)
+- Secondary: #10B981 (emerald) 
+- Background: #F9FAFB (light grey)
+- Chat bubbles: #FFFFFF (white) for user, #EEF2FF (light indigo) for AI
+- Text: #111827 (dark grey)
+- Accent: #F59E0B (amber)
+- Inter/SF Pro fonts
+
+I need to create a comprehensive mockup that shows:
+1. Chat interface with message bubbles
+2. Image upload functionality
+3. Step-by-step solutions
+4. Follow-up conversations
+5. Mobile responsive design
+6. Loading states
+7. File upload areas
+
+I'll create a mockup that demonstrates all these features with sample conversations and interactions.EtALCkgIBxACGAIqQOfQu6wrYfW3sVDMxx6AGzt7Apqj+GDoBR78IdiNfnrRa07KQa2xJoz20jbW30yZS6WhZVSqen/y2I67sH+kvi4SDH3wHW9wL1YRkjbSYxoMjKithTRs0DjzC8lqIjC9hF1gZZ48PAY82BpUgqfkg1zxGmXoH9PV3nOO+MwhlLdn9CGwYUqxnpjntrcG2tcqtQpZmoF7J6DzgxeL+AS6e1o9333KvBn8UtOQy6bD3UgVbAmA2mvs217XpvxUvGCpmYuAQ0BPjfZVupfmEIi0Znw/254iiW9EQSLRqod0Q+sqRnJuBNV4MSa64Te/YHzm7+q6Z/zTOZs/U/wOuucaKSyld7B3OmwF7nZxIHwMq6Sn1PZVRftmcoXSBL56bij5Lg0ThKdx+MNCvUtrBY+757wWmJ+CJpmb/UmJ+czMifk8wXBZdQ+l3aoBQytgH0oOh6OjfIHoBB/1s/cv+XzJ3NSCIf35zOQAZgZv85zJpvq74joknc9vXOgJc7RQ0iaHvdqQV5sxXs8MLmN2UYhhGNwPk8SQyfU14N+kgQy2K/AU+OnXoyhOPYZv/+/8CdXYI8q4Esd71n5dJ7W/e4kh3JbaDHcCYkOWKWag4YAtTk0LiPZmdoF59PmJwBojsYN8aGYpEi8zzzICMg8l0tbU1G0I0SaEcWU5e83vTWETP2IlxsTr+GhkaKGlebHP3Fw9damPKXHQ9216551aLRUzImuBsoSls2AV3wrYQrhzEtRACSC5MU3TigRcfilJA9AGDP7cFV1pdtZooqh+PqbCPRTxnfU5o5cMcal+QACca8EFRbvvLxoXyVa9zBI+dg2Uuek5ZcA1d3bdUvwG43seIwPWyU8+7zoCJvbIIGSbbXDYhzLOO0Pbnd5zY+3mnPYwHGcSPkGF2aKfij3GMuiuNSmJ9bdK0RnsNVZq/qi9VhNeeYPwOSTBMNeipiKmx8H+MyKuNeCNUzpkg8fl22/B+ir2HN2/iIWRI8KC2f/Pme9EJTGZ4osafgtfQNN9XgS9HDnNHV/Vq4+uT3gRfsI1Dw4NFPIYtYaUf7HbmvAHO672wWq1rzHA4x2Tp2PixQWijLDMARGSmlvcrdMTeetEhvNlaw+nVF/JXYfcytZqqIdxgRXRa91s+FCNux/aiHti8uAqiFTjp7WxSzOoKn9KMwGpSxF+TYj1lteRoow99CgDhF+q2hXvy5RDyOd0qhdjHEyHGeBiHxw8qHTabATHRL1rZR2Yx+NVxbuXzTlszcSmuAe2nA3gXqcLkj+C6aH91IdQO3yPeUNXngVOdkbqVNLaapSXqTB6wlXffp9a0/ojTmdbHXHupI+xZQANLOZz1dBSvJe1RkmugXLk3DcFWhnisc8dLQS0rxVwGUwpT6yDb3TKk4cL5pz90vIWKStM3sB6TGUKto+GuKC7fIKnYZvZ4gbm/fY1U89Llz2361ihJM3CQqOJIvtD08AIHhqInnN30edN9ULbnNnE2MVvoN6QQ9U4Gy6m7plcgiFzgX2osYcK/hnyvtiLTa7x8tQlWFTRma45/lG+r8rqvWujoaozUMArT7fZrpM0HgVMKPiplOk1kRDxfZJGj4WEIzgqqtOfSRUV+/4g//8/AvP+sqXlmRDk+OM8bedu7oaUl/3Dxn45zlZgaWpdvotf5vNccae25hWPAtGkIDV5cfp6k3MzvDKjwrtgBvGq/jk03GoP9wjC6eUtYmJAcadqv4ONkJxann+s2dAQUcBh7rfP0A9sGo41xlUHVfna0zViQCegFbj9H07+EWpgwWTX4unxH8u+/lDgq6jyC8dINYxvSTQGIeo5owuE9e8y/LwkMEYyxm5ULRTaOVGQooM6PfunQVvi35vFHKN9Nngir8euDQJjeD8PMFmIj3oEkKLQPUWkAvuwCM8EJNYcXev/SgDmIBGl+qquIMYn9kRjmwgk99F1ZcmMblcEWDXxL+3pscl2sHzIAz8lGAE=# style
+**Design Approach:** Reference-based approach inspired by ChatGPT's conversational interface and Photomath's problem-solving layout, focusing on clean chat design and clear solution presentation.
+
+**Color Palette:** Primary #6366F1 (indigo), Secondary #10B981 (emerald), Background #F9FAFB (light grey), User messages #FFFFFF (white), AI responses #EEF2FF (light indigo), Text #111827 (dark grey), Accent #F59E0B (amber).
+
+**Typography:** Inter font family for modern, readable typography with varied weights for hierarchy.
+
+**Layout:** Chat-bubble based conversation flow with sticky input area, responsive grid system, and proper message threading.
+
+**Components:** Chat bubbles with distinct styling, file upload dropzone, syntax highlighting containers, loading indicators, toast notifications, and mobile-optimized input controls.
+
+**Interaction Patterns:** Hover states for buttons, loading animations, drag-and-drop feedback, copy-to-clipboard functionality, and smooth scrolling behavior.
+
+# directory_structure
+```json
+[
+     {"path": "production_design_mockup.html", "status": "new"}
+]
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Study Tutor - Smart Problem Solver</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                borderRadius: {
+                    lg: "var(--radius)",
+                    md: "calc(var(--radius) - 2px)",
+                    sm: "calc(var(--radius) - 4px)",
+                },
+                colors: {
+                    background: "var(--background)",
+                    foreground: "var(--foreground)",
+                    card: {
+                        DEFAULT: "var(--card)",
+                        foreground: "var(--card-foreground)",
+                    },
+                    popover: {
+                        DEFAULT: "var(--popover)",
+                        foreground: "var(--popover-foreground)",
+                    },
+                    primary: {
+                        DEFAULT: "var(--primary)",
+                        foreground: "var(--primary-foreground)",
+                    },
+                    secondary: {
+                        DEFAULT: "var(--secondary)",
+                        foreground: "var(--secondary-foreground)",
+                    },
+                    muted: {
+                        DEFAULT: "var(--muted)",
+                        foreground: "var(--muted-foreground)",
+                    },
+                    accent: {
+                        DEFAULT: "var(--accent)",
+                        foreground: "var(--accent-foreground)",
+                    },
+                    destructive: {
+                        DEFAULT: "var(--destructive)",
+                        foreground: "var(--destructive-foreground)",
+                    },
+                    border: "var(--border)",
+                    input: "var(--input)",
+                    ring: "var(--ring)",
+                }
+            },
+            fontFamily: {
+                sans: ['Inter', 'SF Pro Display', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            }
+        },
+    };
+    </script>
+    <style>
+        :root {
+            --background: hsl(210 40% 98%);
+            --foreground: hsl(222 84% 5%);
+            --card: hsl(0 0% 100%);
+            --card-foreground: hsl(222 84% 5%);
+            --popover: hsl(0 0% 100%);
+            --popover-foreground: hsl(222 84% 5%);
+            --primary: hsl(239 84% 67%);
+            --primary-foreground: hsl(0 0% 100%);
+            --secondary: hsl(158 64% 52%);
+            --secondary-foreground: hsl(0 0% 100%);
+            --muted: hsl(220 14% 96%);
+            --muted-foreground: hsl(220 8% 46%);
+            --accent: hsl(43 96% 56%);
+            --accent-foreground: hsl(0 0% 100%);
+            --destructive: hsl(0 84% 60%);
+            --destructive-foreground: hsl(0 0% 100%);
+            --border: hsl(220 13% 91%);
+            --input: hsl(220 13% 91%);
+            --ring: hsl(239 84% 67%);
+            --radius: 0.5rem;
+        }
+
+        .dark {
+            --background: hsl(222 84% 5%);
+            --foreground: hsl(210 40% 98%);
+            --card: hsl(222 84% 5%);
+            --card-foreground: hsl(210 40% 98%);
+            --popover: hsl(222 84% 5%);
+            --popover-foreground: hsl(210 40% 98%);
+            --primary: hsl(239 84% 67%);
+            --primary-foreground: hsl(0 0% 100%);
+            --secondary: hsl(158 64% 52%);
+            --secondary-foreground: hsl(0 0% 100%);
+            --muted: hsl(217 32% 17%);
+            --muted-foreground: hsl(215 20% 65%);
+            --accent: hsl(43 96% 56%);
+            --accent-foreground: hsl(0 0% 100%);
+            --destructive: hsl(0 84% 60%);
+            --destructive-foreground: hsl(0 0% 100%);
+            --border: hsl(217 32% 17%);
+            --input: hsl(217 32% 17%);
+            --ring: hsl(239 84% 67%);
+        }
+
+        .math-expression {
+            font-family: 'Courier New', monospace;
+            background: hsl(220 14% 96%);
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            color: hsl(239 84% 67%);
+        }
+
+        .typing-indicator {
+            animation: typing 1.5s infinite;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% { opacity: 0.3; }
+            30% { opacity: 1; }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .drag-over {
+            border-color: hsl(239 84% 67%);
+            background-color: hsl(239 84% 97%);
+        }
+    </style>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-background text-foreground font-sans">
+    <!-- @COMPONENT: MainLayout -->
+    <div class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <!-- @COMPONENT: Header -->
+        <header class="bg-card border-b border-border sticky top-0 z-50">
+            <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-primary text-primary-foreground rounded-lg p-2">
+                        <i class="fas fa-brain text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-semibold">AI Study Tutor</h1>
+                        <p class="text-sm text-muted-foreground">Smart Problem Solver</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button class="p-2 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors">
+                        <i class="fas fa-history"></i>
+                    </button>
+                    <button class="p-2 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+        <!-- @END_COMPONENT: Header -->
+
+        <!-- Main Chat Area -->
+        <!-- @COMPONENT: ChatContainer -->
+        <main class="flex-1 overflow-hidden flex flex-col">
+            <div class="flex-1 overflow-y-auto px-4 py-6">
+                <div class="max-w-4xl mx-auto space-y-6">
+                    
+                    <!-- Welcome Message -->
+                    <!-- @COMPONENT: WelcomeMessage -->
+                    <div class="text-center py-8">
+                        <div class="bg-primary text-primary-foreground rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-graduation-cap text-2xl"></i>
+                        </div>
+                        <h2 class="text-2xl font-semibold mb-2">Welcome to AI Study Tutor!</h2>
+                        <p class="text-muted-foreground mb-6 max-w-2xl mx-auto">
+                            I'm here to help you solve problems step-by-step. You can ask me questions directly or upload images of your homework problems.
+                        </p>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl mx-auto">
+                            <div class="bg-card border border-border rounded-lg p-4 text-left">
+                                <div class="bg-secondary/10 text-secondary rounded-lg w-10 h-10 flex items-center justify-center mb-3">
+                                    <i class="fas fa-calculator"></i>
+                                </div>
+                                <h3 class="font-medium mb-2">Math Problems</h3>
+                                <p class="text-sm text-muted-foreground">Algebra, calculus, geometry, and more</p>
+                            </div>
+                            <div class="bg-card border border-border rounded-lg p-4 text-left">
+                                <div class="bg-secondary/10 text-secondary rounded-lg w-10 h-10 flex items-center justify-center mb-3">
+                                    <i class="fas fa-flask"></i>
+                                </div>
+                                <h3 class="font-medium mb-2">Science</h3>
+                                <p class="text-sm text-muted-foreground">Physics, chemistry, biology concepts</p>
+                            </div>
+                            <div class="bg-card border border-border rounded-lg p-4 text-left">
+                                <div class="bg-secondary/10 text-secondary rounded-lg w-10 h-10 flex items-center justify-center mb-3">
+                                    <i class="fas fa-camera"></i>
+                                </div>
+                                <h3 class="font-medium mb-2">Image Upload</h3>
+                                <p class="text-sm text-muted-foreground">Take photos of your homework</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- @END_COMPONENT: WelcomeMessage -->
+
+                    <!-- Sample Conversation -->
+                    <!-- @MAP: messages.map(message => ( -->
+                    
+                    <!-- User Message with Image -->
+                    <!-- @COMPONENT: UserMessage -->
+                    <div class="flex items-start space-x-3 fade-in">
+                        <div class="bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-medium flex-shrink-0">
+                            U
+                        </div>
+                        <div class="flex-1">
+                            <div class="bg-card border border-border rounded-lg p-4 shadow-sm">
+                                <p class="text-foreground mb-3" data-mock="true">Can you help me solve this quadratic equation?</p>
+                                <!-- Sample uploaded image of math problem -->
+                                <!-- A close-up photo of a handwritten quadratic equation: 2x² + 5x - 3 = 0 on lined paper -->
+                                <div class="bg-muted rounded-lg p-3 border-2 border-dashed border-border">
+                                    <img src="https://images.unsplash.com/photo-1635070041078-e363dbe005cb?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=400" 
+                                         alt="Handwritten quadratic equation" 
+                                         class="rounded-lg max-w-full h-auto"
+                                         data-mock-image="true" 
+                                         data-implementation="User uploaded image of math problem" />
+                                    <p class="text-sm text-muted-foreground mt-2">
+                                        <i class="fas fa-image mr-1"></i>
+                                        quadratic_equation.jpg
+                                    </p>
+                                </div>
+                            </div>
+                            <p class="text-xs text-muted-foreground mt-2">Today at 2:34 PM</p>
+                        </div>
+                    </div>
+                    <!-- @END_COMPONENT: UserMessage -->
+
+                    <!-- AI Response -->
+                    <!-- @COMPONENT: AIMessage -->
+                    <div class="flex items-start space-x-3 fade-in">
+                        <div class="bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center text-sm font-medium flex-shrink-0">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="bg-primary/5 border border-primary/20 rounded-lg p-4 shadow-sm">
+                                <p class="text-foreground mb-4" data-mock="true">I can see your quadratic equation: <span class="math-expression">2x² + 5x - 3 = 0</span>. Let me solve this step-by-step using the quadratic formula.</p>
+                                
+                                <div class="bg-card rounded-lg p-4 border border-border space-y-4">
+                                    <h4 class="font-semibold text-primary">Step-by-Step Solution:</h4>
+                                    
+                                    <div class="space-y-3">
+                                        <div class="flex items-start space-x-3">
+                                            <div class="bg-accent text-accent-foreground rounded-full w-6 h-6 flex items-center justify-center text-xs font-medium flex-shrink-0">1</div>
+                                            <div>
+                                                <p class="font-medium">Identify coefficients</p>
+                                                <p class="text-sm text-muted-foreground">For <span class="math-expression">ax² + bx + c = 0</span>: a = 2, b = 5, c = -3</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="flex items-start space-x-3">
+                                            <div class="bg-accent text-accent-foreground rounded-full w-6 h-6 flex items-center justify-center text-xs font-medium flex-shrink-0">2</div>
+                                            <div>
+                                                <p class="font-medium">Apply quadratic formula</p>
+                                                <p class="text-sm text-muted-foreground">
+                                                    <span class="math-expression">x = (-b ± √(b² - 4ac)) / 2a</span>
+                                                </p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="flex items-start space-x-3">
+                                            <div class="bg-accent text-accent-foreground rounded-full w-6 h-6 flex items-center justify-center text-xs font-medium flex-shrink-0">3</div>
+                                            <div>
+                                                <p class="font-medium">Calculate discriminant</p>
+                                                <p class="text-sm text-muted-foreground">
+                                                    <span class="math-expression">b² - 4ac = 5² - 4(2)(-3) = 25 + 24 = 49</span>
+                                                </p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="flex items-start space-x-3">
+                                            <div class="bg-accent text-accent-foreground rounded-full w-6 h-6 flex items-center justify-center text-xs font-medium flex-shrink-0">4</div>
+                                            <div>
+                                                <p class="font-medium">Solve for x</p>
+                                                <p class="text-sm text-muted-foreground">
+                                                    <span class="math-expression">x = (-5 ± √49) / 4 = (-5 ± 7) / 4</span>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="bg-secondary/10 border border-secondary/20 rounded-lg p-3">
+                                        <p class="font-semibold text-secondary mb-2">Final Answer:</p>
+                                        <p class="text-sm">
+                                            <span class="math-expression">x₁ = (-5 + 7) / 4 = 1/2</span><br>
+                                            <span class="math-expression">x₂ = (-5 - 7) / 4 = -3</span>
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center justify-between mt-4">
+                                    <p class="text-xs text-muted-foreground">Today at 2:35 PM</p>
+                                    <button class="text-sm text-primary hover:text-primary/80 transition-colors" data-event="click:copyToClipboard">
+                                        <i class="fas fa-copy mr-1"></i>Copy solution
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- @END_COMPONENT: AIMessage -->
+
+                    <!-- Follow-up User Question -->
+                    <!-- @COMPONENT: UserMessage -->
+                    <div class="flex items-start space-x-3 fade-in">
+                        <div class="bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-medium flex-shrink-0">
+                            U
+                        </div>
+                        <div class="flex-1">
+                            <div class="bg-card border border-border rounded-lg p-4 shadow-sm">
+                                <p class="text-foreground" data-mock="true">Can you explain how to verify these solutions?</p>
+                            </div>
+                            <p class="text-xs text-muted-foreground mt-2">Today at 2:36 PM</p>
+                        </div>
+                    </div>
+                    <!-- @END_COMPONENT: UserMessage -->
+
+                    <!-- AI Follow-up Response -->
+                    <!-- @COMPONENT: AIMessage -->
+                    <div class="flex items-start space-x-3 fade-in">
+                        <div class="bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center text-sm font-medium flex-shrink-0">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="bg-primary/5 border border-primary/20 rounded-lg p-4 shadow-sm">
+                                <p class="text-foreground mb-4" data-mock="true">Great question! To verify solutions, substitute each value back into the original equation:</p>
+                                
+                                <div class="bg-card rounded-lg p-4 border border-border space-y-4">
+                                    <div>
+                                        <h5 class="font-medium text-secondary mb-2">Verify x = 1/2:</h5>
+                                        <p class="text-sm font-mono bg-muted p-2 rounded">
+                                            2(1/2)² + 5(1/2) - 3 = 2(1/4) + 5/2 - 3 = 1/2 + 5/2 - 3 = 3 - 3 = 0 ✓
+                                        </p>
+                                    </div>
+                                    
+                                    <div>
+                                        <h5 class="font-medium text-secondary mb-2">Verify x = -3:</h5>
+                                        <p class="text-sm font-mono bg-muted p-2 rounded">
+                                            2(-3)² + 5(-3) - 3 = 2(9) - 15 - 3 = 18 - 15 - 3 = 0 ✓
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center justify-between mt-4">
+                                    <p class="text-xs text-muted-foreground">Today at 2:37 PM</p>
+                                    <button class="text-sm text-primary hover:text-primary/80 transition-colors" data-event="click:copyToClipboard">
+                                        <i class="fas fa-copy mr-1"></i>Copy verification
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- @END_COMPONENT: AIMessage -->
+
+                    <!-- Loading State Example -->
+                    <!-- @COMPONENT: LoadingMessage -->
+                    <div class="flex items-start space-x-3 fade-in" style="display: none;" data-mock="true">
+                        <div class="bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center text-sm font-medium flex-shrink-0">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="bg-primary/5 border border-primary/20 rounded-lg p-4 shadow-sm">
+                                <div class="flex items-center space-x-2">
+                                    <div class="flex space-x-1">
+                                        <div class="w-2 h-2 bg-primary rounded-full typing-indicator"></div>
+                                        <div class="w-2 h-2 bg-primary rounded-full typing-indicator" style="animation-delay: 0.2s"></div>
+                                        <div class="w-2 h-2 bg-primary rounded-full typing-indicator" style="animation-delay: 0.4s"></div>
+                                    </div>
+                                    <p class="text-sm text-muted-foreground">AI is analyzing your problem...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- @END_COMPONENT: LoadingMessage -->
+
+                    <!-- @END_MAP )) -->
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <!-- @COMPONENT: ChatInput -->
+            <div class="border-t border-border bg-card/50 backdrop-blur-sm sticky bottom-0">
+                <div class="max-w-4xl mx-auto px-4 py-4">
+                    <!-- File Upload Dropzone -->
+                    <!-- @COMPONENT: FileUploadZone -->
+                    <div class="mb-4 border-2 border-dashed border-border rounded-lg p-6 text-center bg-muted/30 hover:bg-muted/50 transition-colors hidden" 
+                         id="dropzone" 
+                         data-implementation="Drag and drop file upload area">
+                        <i class="fas fa-cloud-upload-alt text-3xl text-muted-foreground mb-2"></i>
+                        <p class="text-muted-foreground mb-2">Drag and drop your image here, or click to browse</p>
+                        <p class="text-xs text-muted-foreground">Supports JPG, PNG, PDF up to 10MB</p>
+                        <input type="file" class="hidden" accept="image/*,.pdf" data-event="change:handleFileUpload" />
+                    </div>
+                    <!-- @END_COMPONENT: FileUploadZone -->
+
+                    <div class="flex items-end space-x-3">
+                        <div class="flex-1">
+                            <div class="relative">
+                                <textarea 
+                                    placeholder="Ask a question or describe your problem..." 
+                                    class="w-full bg-background border border-border rounded-lg px-4 py-3 pr-20 resize-none focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent min-h-[52px] max-h-32"
+                                    rows="1"
+                                    data-event="input:autoResize"
+                                    data-implementation="Auto-resizing textarea with file upload integration"></textarea>
+                                
+                                <div class="absolute right-2 bottom-2 flex items-center space-x-1">
+                                    <button class="p-2 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors" 
+                                            data-event="click:openFileUpload"
+                                            data-implementation="Open file picker">
+                                        <i class="fas fa-paperclip"></i>
+                                    </button>
+                                    <button class="p-2 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
+                                            data-event="click:openCamera"
+                                            data-implementation="Open camera for photo capture">
+                                        <i class="fas fa-camera"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button class="bg-primary text-primary-foreground rounded-lg px-6 py-3 hover:bg-primary/90 transition-colors font-medium flex items-center space-x-2"
+                                data-event="click:sendMessage"
+                                data-implementation="Send message to Groq API">
+                            <span>Send</span>
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                    
+                    <p class="text-xs text-muted-foreground mt-2 text-center">
+                        AI Study Tutor can make mistakes. Please verify important information.
+                    </p>
+                </div>
+            </div>
+            <!-- @END_COMPONENT: ChatInput -->
+        </main>
+        <!-- @END_COMPONENT: ChatContainer -->
+
+        <!-- Toast Notification -->
+        <!-- @COMPONENT: ToastNotification -->
+        <div class="fixed top-4 right-4 z-50 hidden" id="toast" data-implementation="Toast notification system">
+            <div class="bg-secondary text-secondary-foreground rounded-lg p-4 shadow-lg flex items-center space-x-3 max-w-sm">
+                <i class="fas fa-check-circle"></i>
+                <p class="text-sm font-medium" data-bind="toast.message">Solution copied to clipboard!</p>
+                <button class="text-secondary-foreground/80 hover:text-secondary-foreground" data-event="click:closeToast">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: ToastNotification -->
+    </div>
+    <!-- @END_COMPONENT: MainLayout -->
+
+    <script>
+        (function() {
+            // TODO: Implement business logic, API calls, and state management
+            
+            // Auto-resize textarea
+            const textarea = document.querySelector('textarea');
+            if (textarea) {
+                textarea.addEventListener('input', function() {
+                    this.style.height = 'auto';
+                    this.style.height = Math.min(this.scrollHeight, 128) + 'px';
+                });
+            }
+
+            // File upload simulation
+            const fileButtons = document.querySelectorAll('[data-event*="FileUpload"], [data-event*="Camera"]');
+            fileButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // TODO: Implement actual file upload and camera functionality
+                    console.log('File upload/camera functionality would be implemented here');
+                });
+            });
+
+            // Copy to clipboard simulation
+            const copyButtons = document.querySelectorAll('[data-event*="copyToClipboard"]');
+            copyButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // TODO: Implement actual clipboard functionality
+                    console.log('Copy to clipboard functionality would be implemented here');
+                    showToast('Solution copied to clipboard!');
+                });
+            });
+
+            // Send message simulation
+            const sendButton = document.querySelector('[data-event*="sendMessage"]');
+            if (sendButton) {
+                sendButton.addEventListener('click', function() {
+                    // TODO: Implement actual message sending to Groq API
+                    console.log('Message sending to Groq API would be implemented here');
+                });
+            }
+
+            // Toast notification system
+            function showToast(message) {
+                const toast = document.getElementById('toast');
+                const messageElement = toast.querySelector('[data-bind="toast.message"]');
+                if (toast && messageElement) {
+                    messageElement.textContent = message;
+                    toast.classList.remove('hidden');
+                    setTimeout(() => {
+                        toast.classList.add('hidden');
+                    }, 3000);
+                }
+            }
+
+            // Drag and drop functionality placeholder
+            const dropzone = document.getElementById('dropzone');
+            if (dropzone) {
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    dropzone.addEventListener(eventName, function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    });
+                });
+
+                ['dragenter', 'dragover'].forEach(eventName => {
+                    dropzone.addEventListener(eventName, function() {
+                        this.classList.add('drag-over');
+                    });
+                });
+
+                ['dragleave', 'drop'].forEach(eventName => {
+                    dropzone.addEventListener(eventName, function() {
+                        this.classList.remove('drag-over');
+                    });
+                });
+
+                dropzone.addEventListener('drop', function(e) {
+                    // TODO: Handle dropped files and send to Groq API
+                    console.log('File drop handling would be implemented here');
+                });
+            }
+
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                    // TODO: Send message on Ctrl/Cmd + Enter
+                    console.log('Send message keyboard shortcut triggered');
+                }
+            });
+        })();
+    </script>
+</body>
+</html>
